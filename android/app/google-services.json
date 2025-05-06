@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "136928993251",
+    "project_id": "cattle-managementapp-907de",
+    "storage_bucket": "cattle-managementapp-907de.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136928993251:android:8d2acfe452766972534ad6",
+        "android_client_info": {
+          "package_name": "com.example.cattle_managementapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcmRhNzJv7ONM-4t7hywC-9vzNZ58z9oU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
