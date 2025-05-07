@@ -31,7 +31,6 @@ class Animal {
     this.imagePath,
   });
 
-  // Method to convert the object into a map for Firebase or local storage
   Map<String, dynamic> toJson() => {
     'name': name,
     'breed': breed,
@@ -48,7 +47,6 @@ class Animal {
     'imagePath': imagePath,
   };
 
-  // Factory method to create an instance from Firebase data or local storage
   factory Animal.fromJson(Map<String, dynamic> json) => Animal(
     name: json['name'],
     breed: json['breed'],

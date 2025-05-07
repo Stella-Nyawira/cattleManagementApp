@@ -29,8 +29,8 @@ class SignInPage extends StatelessWidget {
                           Column(
                             children: [
                               Text(
-                                'Welcome to the Cattle Manager App',
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                                'Welcome, to the Cattle Manager App',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                               ),
                               /*  Text(
                                 'by Stella',
@@ -51,7 +51,6 @@ class SignInPage extends StatelessWidget {
 
                               authController.signInWithGoogle().then((value) {
                                 log("Signed in with google as ${value.user?.displayName}");
-                                // Get.off(() => HomePage());
                               });
                               log("Yay 2");
                             },

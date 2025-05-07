@@ -1,15 +1,17 @@
 import 'dart:developer';
-
 import 'package:cattle_managementapp/pages/homepage.dart';
+import 'package:cattle_managementapp/pages/landing_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/material.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find();
 
   final isLoadingAuth = true.obs;
   final user = FirebaseAuth.instance.currentUser.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -24,7 +26,7 @@ class AuthController extends GetxController {
         log('User is signed in!');
         isLoadingAuth.value = false;
         update();
-        Get.off(() => Homepage());
+        Get.off(() => LandingPage());
       }
     });
   }
@@ -32,7 +34,6 @@ class AuthController extends GetxController {
   Future<UserCredential> signInWithGoogle() async {
     isLoadingAuth.value = true;
     update();
-    // Trigger the authentication flow
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn().catchError((e, s) {
       log("There was an error signing in $e\n$s");
       isLoadingAuth.value = false;
@@ -42,7 +43,6 @@ class AuthController extends GetxController {
 
     final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
-    // Create a new credential
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken,
@@ -50,12 +50,30 @@ class AuthController extends GetxController {
     isLoadingAuth.value = false;
     update();
 
-    // Once signed in, return the UserCredential
     return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn().signOut();
-    await FirebaseAuth.instance.signOut();
+    bool? shouldSignOut = await showSignOutDialog();
+    if (shouldSignOut ?? false) {
+      await GoogleSignIn().signOut();
+      await FirebaseAuth.instance.signOut();
+    }
+  }
+
+  Future<bool?> showSignOutDialog() async {
+    return await Get.dialog<bool>(
+      AlertDialog(
+        title: Text('Sign Out'),
+        content: Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(onPressed: () => Get.back(result: false), child: Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: Text('Sign Out,', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
