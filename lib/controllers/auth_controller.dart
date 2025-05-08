@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'package:cattle_managementapp/pages/homepage.dart';
 import 'package:cattle_managementapp/pages/landing_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -70,7 +69,7 @@ class AuthController extends GetxController {
           TextButton(onPressed: () => Get.back(result: false), child: Text('Cancel')),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text('Sign Out,', style: TextStyle(color: Colors.red)),
+            child: Text('Sign Out', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

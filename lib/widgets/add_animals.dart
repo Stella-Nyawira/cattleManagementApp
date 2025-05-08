@@ -1,5 +1,9 @@
+import 'dart:developer';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddAnimalPage extends StatefulWidget {
   const AddAnimalPage({super.key});
@@ -22,6 +26,30 @@ class AddAnimalPageState extends State<AddAnimalPage> {
   bool isPregnant = false;
   bool isMilking = false;
 
+  File? selectedImage;
+  final picker = ImagePicker();
+
+  Future<void> pickImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> uploadImage(File image, String tag) async {
+    try {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_$tag.jpg';
+      final ref = FirebaseStorage.instance.ref().child('animal_images/$fileName');
+      await ref.putFile(image);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      log("Image upload error: $e");
+      return null;
+    }
+  }
+
   Future<void> pickDate(TextEditingController controller) async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -42,6 +70,11 @@ class AddAnimalPageState extends State<AddAnimalPage> {
     }
 
     try {
+      String? imageUrl = selectedImage != null ? await uploadImage(selectedImage!, tag) : null;
+
+      if (imageUrl == null) {
+        log("Image uploaded successfully:$imageUrl");
+      }
       final animalData = {
         'name': tag,
         'breed': breedController.text.trim(),
@@ -61,7 +94,7 @@ class AddAnimalPageState extends State<AddAnimalPage> {
         'sireTag': '',
         'damTag': '',
         'isMilking': isMilking,
-        'imagePath': '',
+        'photoUrl': imageUrl,
       };
 
       await FirebaseFirestore.instance.collection('animals').doc(tag).set(animalData);
@@ -69,7 +102,7 @@ class AddAnimalPageState extends State<AddAnimalPage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Animal saved successfully")));
 
       // Clear form
-      nameController.clear();
+      /* nameController.clear();
       breedController.clear();
       genderController.clear();
       dobController.clear();
@@ -80,7 +113,7 @@ class AddAnimalPageState extends State<AddAnimalPage> {
       setState(() {
         isPregnant = false;
         isMilking = false;
-      });
+      }); */
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error saving animal: $e")));
@@ -144,15 +177,24 @@ class AddAnimalPageState extends State<AddAnimalPage> {
             ),
 
             Text("Photo Upload", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.lightBlue)),
-            Container(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              height: 100,
-              width: 100,
-              color: Colors.grey[300],
-              child: Icon(Icons.add_a_photo),
-            ),
+            SizedBox(height: 8),
+            InkWell(
+              onTap: pickImage,
+              child: Container(
+                height: 120,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  image:
+                      selectedImage != null
+                          ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
+                          : null,
+                ),
 
-            SizedBox(height: 20),
+                child: selectedImage == null ? Icon(Icons.add_a_photo, size: 40, color: Colors.grey[800]) : null,
+              ),
+            ),
+            SizedBox(height: 8),
             ElevatedButton(onPressed: saveAnimalToFirebase, child: Text("Save")),
           ],
         ),

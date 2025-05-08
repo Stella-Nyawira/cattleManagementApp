@@ -81,7 +81,9 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () => deleteAnimal(animal.id),
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    //Navigator.push(context,MaterialPageRoute(builder: (_)=>SpecificAnimalDetails(animalId: animal.id)));
+                  },
                 ),
               );
             },
