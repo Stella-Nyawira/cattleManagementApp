@@ -101,19 +101,6 @@ class AddAnimalPageState extends State<AddAnimalPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Animal saved successfully")));
 
-      // Clear form
-      /* nameController.clear();
-      breedController.clear();
-      genderController.clear();
-      dobController.clear();
-      colorController.clear();
-      weightController.clear();
-      expectedBreedingCalvingController.clear();
-      breedingInseminationDateController.clear();
-      setState(() {
-        isPregnant = false;
-        isMilking = false;
-      }); */
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error saving animal: $e")));
