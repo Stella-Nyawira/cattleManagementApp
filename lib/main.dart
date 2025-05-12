@@ -1,4 +1,5 @@
 import 'package:cattle_managementapp/auth/sign_in_page.dart';
+import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/controllers/auth_controller.dart';
 import 'package:cattle_managementapp/firebase_options.dart';
 
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(AuthController());
+    Get.put(AnimalRecordsController());
     return GetMaterialApp(
       title: 'Cattle Management App',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),

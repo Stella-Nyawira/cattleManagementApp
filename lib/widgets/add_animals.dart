@@ -23,9 +23,6 @@ class AddAnimalPageState extends State<AddAnimalPage> {
   final expectedBreedingCalvingController = TextEditingController();
   final breedingInseminationDateController = TextEditingController();
 
-  bool isPregnant = false;
-  bool isMilking = false;
-
   File? selectedImage;
   final picker = ImagePicker();
 
@@ -82,7 +79,7 @@ class AddAnimalPageState extends State<AddAnimalPage> {
         'dateOfBirth': dobController.text.isNotEmpty ? DateTime.parse(dobController.text).toIso8601String() : null,
         'colorMarkings': colorController.text.trim(),
         'weight': double.tryParse(weightController.text.trim()),
-        'isPregnant': isPregnant,
+
         'expectedCalvingDate':
             expectedBreedingCalvingController.text.isNotEmpty
                 ? DateTime.parse(expectedBreedingCalvingController.text).toIso8601String()
@@ -93,7 +90,7 @@ class AddAnimalPageState extends State<AddAnimalPage> {
                 : null,
         'sireTag': '',
         'damTag': '',
-        'isMilking': isMilking,
+
         'photoUrl': imageUrl,
       };
 
@@ -117,7 +114,25 @@ class AddAnimalPageState extends State<AddAnimalPage> {
           children: [
             Text("Basic Information", style: TextStyle(fontWeight: FontWeight.bold)),
             TextField(controller: nameController, decoration: InputDecoration(labelText: "Name/Tag")),
-            TextField(controller: genderController, decoration: InputDecoration(labelText: "Gender")),
+            //TextField(controller: genderController, decoration: InputDecoration(labelText: "Gender")),
+            DropdownButtonFormField<String>(
+              value: genderController.text.isNotEmpty ? genderController.text : null,
+              decoration: InputDecoration(
+                labelText: "Gender",
+                isDense: true, // Makes the input smaller vertically
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              items:
+                  ['Male', 'Female'].map((gender) {
+                    return DropdownMenuItem(value: gender, child: Text(gender));
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  genderController.text = value!;
+                });
+              },
+            ),
+
             TextField(controller: breedController, decoration: InputDecoration(labelText: "Breed")),
             TextField(
               controller: dobController,
@@ -127,41 +142,6 @@ class AddAnimalPageState extends State<AddAnimalPage> {
             ),
             TextField(controller: colorController, decoration: InputDecoration(labelText: "Color/Markings")),
             TextField(controller: weightController, decoration: InputDecoration(labelText: "Weight")),
-
-            ExpansionTile(
-              title: Text("Breeding Information", style: TextStyle(fontWeight: FontWeight.bold)),
-              children: [
-                SwitchListTile(
-                  title: Text("Is Pregnant?"),
-                  value: isPregnant,
-                  onChanged: (val) => setState(() => isPregnant = val),
-                ),
-                if (isPregnant)
-                  TextField(
-                    controller: expectedBreedingCalvingController,
-                    decoration: InputDecoration(labelText: "Expected Calving Date"),
-                    readOnly: true,
-                    onTap: () => pickDate(expectedBreedingCalvingController),
-                  ),
-                TextField(
-                  controller: breedingInseminationDateController,
-                  decoration: InputDecoration(labelText: "Date of Last Service/Insemination"),
-                  readOnly: true,
-                  onTap: () => pickDate(breedingInseminationDateController),
-                ),
-              ],
-            ),
-
-            ExpansionTile(
-              title: Text("Milk Production", style: TextStyle(fontWeight: FontWeight.bold)),
-              children: [
-                SwitchListTile(
-                  title: Text("Is a milking cow?"),
-                  value: isMilking,
-                  onChanged: (val) => setState(() => isMilking = val),
-                ),
-              ],
-            ),
 
             Text("Photo Upload", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.lightBlue)),
             SizedBox(height: 8),

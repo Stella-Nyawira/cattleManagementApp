@@ -4,6 +4,9 @@ import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 class BreedingRecordForm extends StatefulWidget {
   final String animalId;
   final String animalName;
@@ -15,7 +18,7 @@ class BreedingRecordForm extends StatefulWidget {
 }
 
 class _BreedingRecordFormState extends State<BreedingRecordForm> {
-  final AnimalRecordsController recordsController = Get.put(AnimalRecordsController());
+  final AnimalRecordsController recordsController = Get.find<AnimalRecordsController>();
 
   final heatDateController = TextEditingController();
   final inseminationDateController = TextEditingController();
@@ -26,24 +29,21 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
   final bullIdController = TextEditingController();
   final notesController = TextEditingController();
 
+  String? selectedGender;
+
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Fetch existing records when the page is loaded
-    fetchBreedingRecord();
+    _fetchBreedingRecord();
   }
 
-  // Fetch existing breeding record for this animal (if available)
-  Future<void> fetchBreedingRecord() async {
+  Future<void> _fetchBreedingRecord() async {
     try {
-      // Fetch the most recent breeding record
       var records = await recordsController.fetchBreedingRecords(widget.animalId);
-
       if (records.isNotEmpty) {
-        // Fill in the fields with existing data
-        var existingRecord = records.first; // Assuming the first record is the most recent
+        var existingRecord = records.first;
         heatDateController.text = existingRecord['heatDate'] ?? '';
         inseminationDateController.text = existingRecord['inseminationDate'] ?? '';
         expectedHeatDateController.text = existingRecord['expectedHeatDate'] ?? '';
@@ -52,9 +52,10 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
         breedingMethodController.text = existingRecord['breedingMethod'] ?? '';
         bullIdController.text = existingRecord['bullId'] ?? '';
         notesController.text = existingRecord['notes'] ?? '';
+        selectedGender = existingRecord['gender'] ?? null;
       }
     } catch (e) {
-      log('Error fetching breeding record: $e');
+      debugPrint('Error fetching breeding record: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -62,7 +63,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     }
   }
 
-  Future<void> pickDate(TextEditingController controller) async {
+  Future<void> _pickDate(TextEditingController controller) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -74,7 +75,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     }
   }
 
-  Future<void> saveBreedingRecord() async {
+  Future<void> _saveBreedingRecord() async {
     final breedingData = {
       'heatDate': heatDateController.text,
       'inseminationDate': inseminationDateController.text,
@@ -84,6 +85,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       'breedingMethod': breedingMethodController.text,
       'bullId': bullIdController.text,
       'notes': notesController.text,
+      'gender': selectedGender,
     };
 
     try {
@@ -92,7 +94,6 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Breeding record saved for ${widget.animalName}')));
-
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save breeding record: $e')));
@@ -107,52 +108,49 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
           isLoading
               ? Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    TextField(
-                      controller: heatDateController,
-                      decoration: InputDecoration(labelText: 'Heat Date'),
-                      readOnly: true,
-                      onTap: () => pickDate(heatDateController),
-                    ),
-                    TextField(
-                      controller: inseminationDateController,
-                      decoration: InputDecoration(labelText: 'Insemination Date'),
-                      readOnly: true,
-                      onTap: () => pickDate(inseminationDateController),
-                    ),
-                    TextField(
-                      controller: expectedHeatDateController,
-                      decoration: InputDecoration(labelText: 'Expected Heat Date'),
-                      readOnly: true,
-                      onTap: () => pickDate(expectedHeatDateController),
-                    ),
-                    TextField(
-                      controller: expectedCalvingDateController,
-                      decoration: InputDecoration(labelText: 'Expected Calving Date'),
-                      readOnly: true,
-                      onTap: () => pickDate(expectedCalvingDateController),
-                    ),
-                    TextField(
-                      controller: breedingMethodController,
-                      decoration: InputDecoration(labelText: 'Method of Breeding'),
-                    ),
-                    TextField(controller: bullIdController, decoration: InputDecoration(labelText: 'Bull ID')),
-                    TextField(
-                      controller: vetNameController,
-                      decoration: InputDecoration(labelText: 'Veterinary Doctor Name'),
-                    ),
-                    TextField(
-                      controller: notesController,
-                      decoration: InputDecoration(labelText: 'Notes'),
-                      maxLines: 3,
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(onPressed: saveBreedingRecord, child: Text('Save Breeding Record')),
+                    buildDropdownField('Gender', ['Male', 'Female']),
+                    buildDateField(heatDateController, 'Heat Date'),
+                    buildDateField(inseminationDateController, 'Insemination Date'),
+                    buildDateField(expectedHeatDateController, 'Expected Heat Date'),
+                    buildDateField(expectedCalvingDateController, 'Expected Calving Date'),
+                    buildTextField(breedingMethodController, 'Method of Breeding'),
+                    buildTextField(bullIdController, 'Bull ID'),
+                    buildTextField(vetNameController, 'Veterinary Doctor Name'),
+                    buildTextField(notesController, 'Notes', maxLines: 3),
+                    const SizedBox(height: 20),
+                    ElevatedButton(onPressed: _saveBreedingRecord, child: const Text('Save Breeding Record')),
                   ],
                 ),
               ),
+    );
+  }
+
+  Widget buildDateField(TextEditingController controller, String label) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      readOnly: true,
+      onTap: () => _pickDate(controller),
+    );
+  }
+
+  Widget buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
+    return TextField(controller: controller, decoration: InputDecoration(labelText: label), maxLines: maxLines);
+  }
+
+  Widget buildDropdownField(String label, List<String> options) {
+    return DropdownButtonFormField<String>(
+      value: selectedGender,
+      decoration: InputDecoration(labelText: label),
+      items: options.map((gender) => DropdownMenuItem(value: gender, child: Text(gender))).toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedGender = value!;
+        });
+      },
     );
   }
 }
