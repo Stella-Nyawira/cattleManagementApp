@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:cattle_managementapp/model/milkProduction_record_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
@@ -7,6 +6,45 @@ import 'package:cattle_managementapp/model/healthRecord_model.dart';
 
 class AnimalRecordsController extends GetxController {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  var allAnimals = <DocumentSnapshot>[].obs;
+  var searchResults = <DocumentSnapshot>[].obs;
+  var isLoading = false.obs;
+  var searchTerm = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchAllAnimals();
+  }
+
+  Future<void> fetchAllAnimals() async {
+    try {
+      isLoading.value = true;
+      final snapshot = await firestore.collection('animals').get();
+      allAnimals.value = snapshot.docs;
+      searchResults.value = snapshot.docs;
+    } catch (e) {
+      log('Error fetching animals: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void searchAnimals(String query) {
+    searchTerm.value = query;
+
+    if (query.isEmpty) {
+      searchResults.value = allAnimals;
+    } else {
+      searchResults.value =
+          allAnimals.where((animal) {
+            final name = (animal['name'] ?? '').toString().toLowerCase();
+            final breed = (animal['breed'] ?? '').toString().toLowerCase();
+            return name.contains(query.toLowerCase()) || breed.contains(query.toLowerCase());
+          }).toList();
+    }
+  }
 
   Future<void> saveBreedingRecord({required String animalId, required Map<String, dynamic> breedingData}) async {
     await firestore.collection('animals').doc(animalId).collection('breedingRecords').add({
@@ -108,6 +146,4 @@ class AnimalRecordsController extends GetxController {
 
     return snapshot.docs.map((doc) => HealthRecord.fromMap(doc.data(), doc.id)).toList();
   }
-
-  /// - fetchMilkProductionRecords()
 }

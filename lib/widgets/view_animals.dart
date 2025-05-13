@@ -2,6 +2,7 @@ import 'package:cattle_managementapp/pages/recordTypes_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:io';
 
 class ViewAnimalsPage extends StatefulWidget {
   const ViewAnimalsPage({super.key});
@@ -14,8 +15,8 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
   late Future<List<DocumentSnapshot>> animalsFuture;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     animalsFuture = fetchAnimals();
   }
 
@@ -28,30 +29,86 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
     await FirebaseFirestore.instance.collection('animals').doc(animalId).delete();
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Animal deleted successfully")));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Animal deleted successfully")));
 
     setState(() {
       animalsFuture = fetchAnimals();
     });
   }
 
+  void confirmDelete(String animalId, String animalName) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Confirm Deletion'),
+            content: Text('Are you sure you want to delete "$animalName"?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await deleteAnimal(animalId);
+                },
+
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildImageWidget(String urlOrPath) {
+    if (urlOrPath.startsWith('http')) {
+      return Image.network(
+        urlOrPath,
+        width: 80,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _fallbackImage();
+        },
+      );
+    } else {
+      return Image.file(
+        File(urlOrPath),
+        width: 80,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _fallbackImage();
+        },
+      );
+    }
+  }
+
+  Widget _fallbackImage() {
+    return Container(
+      width: 80,
+      height: 100,
+      color: Colors.grey[300],
+      child: Icon(Icons.broken_image, size: 40, color: Colors.grey[600]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("All Animals")),
+      appBar: AppBar(title: const Text("All Animals")),
+
       body: FutureBuilder<List<DocumentSnapshot>>(
         future: animalsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text("Something went wrong. Please try again later."));
+            return const Center(child: Text("Something went wrong. Please try again later."));
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("No animals found. Add some animals."));
+            return const Center(child: Text("No animals found. Add some animals."));
           }
 
           var animals = snapshot.data!;
@@ -60,10 +117,15 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
             itemCount: animals.length,
             itemBuilder: (context, index) {
               var animal = animals[index];
+              String? photoUrl = animal['photoUrl'];
+
               return InkWell(
+                onTap: () {
+                  Get.to(() => RecordTypesPage(animalId: animal.id, animalName: animal['name']));
+                },
                 child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  padding: EdgeInsets.all(8),
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(10),
@@ -72,40 +134,37 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      animal['photoUrl'] != null
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(animal['photoUrl'], width: 80, height: 100, fit: BoxFit.cover),
-                          )
+                      photoUrl != null && photoUrl.toString().isNotEmpty
+                          ? ClipRRect(borderRadius: BorderRadius.circular(8), child: _buildImageWidget(photoUrl))
                           : Container(
                             width: 80,
                             height: 100,
                             color: Colors.grey[300],
                             child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey[600]),
                           ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               animal['name'] ?? 'Unnamed Animal',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text('Breed: ${animal['breed'] ?? 'Unknown'}'),
                             Text('Gender: ${animal['gender'] ?? 'Unknown'}'),
                             Text('Weight: ${animal['weight']?.toString() ?? 'Unknown'} kg'),
                           ],
                         ),
                       ),
-                      IconButton(icon: Icon(Icons.delete, color: Colors.red), onPressed: () => deleteAnimal(animal.id)),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => confirmDelete(animal.id, animal['name'] ?? 'this animal'),
+                      ),
                     ],
                   ),
                 ),
-                onTap: () {
-                  Get.to(() => RecordTypesPage(animalId: animal.id, animalName: animal['name']));
-                },
               );
             },
           );

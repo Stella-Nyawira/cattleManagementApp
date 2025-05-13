@@ -1,9 +1,12 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:cattle_managementapp/pages/homepage.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class AddAnimalPage extends StatefulWidget {
   const AddAnimalPage({super.key});
@@ -19,9 +22,6 @@ class AddAnimalPageState extends State<AddAnimalPage> {
   final dobController = TextEditingController();
   final colorController = TextEditingController();
   final weightController = TextEditingController();
-
-  final expectedBreedingCalvingController = TextEditingController();
-  final breedingInseminationDateController = TextEditingController();
 
   File? selectedImage;
   final picker = ImagePicker();
@@ -55,12 +55,12 @@ class AddAnimalPageState extends State<AddAnimalPage> {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
-      controller.text = picked.toLocal().toString().split(' ')[0];
+      controller.text = DateFormat('yyyy-MM-dd').format(picked);
     }
   }
 
   Future<void> saveAnimalToFirebase() async {
-    String tag = nameController.text.trim(); // Used as doc ID
+    String tag = nameController.text.trim();
     if (tag.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Tag/Name cannot be empty")));
       return;
@@ -69,36 +69,20 @@ class AddAnimalPageState extends State<AddAnimalPage> {
     try {
       String? imageUrl = selectedImage != null ? await uploadImage(selectedImage!, tag) : null;
 
-      if (imageUrl == null) {
-        log("Image uploaded successfully:$imageUrl");
-      }
       final animalData = {
         'name': tag,
         'breed': breedController.text.trim(),
         'gender': genderController.text.trim(),
-        'dateOfBirth': dobController.text.isNotEmpty ? DateTime.parse(dobController.text).toIso8601String() : null,
+        // Save the DOB in yyyy-MM-dd format
+        'dateOfBirth': dobController.text.isNotEmpty ? dobController.text : null,
         'colorMarkings': colorController.text.trim(),
         'weight': double.tryParse(weightController.text.trim()),
-
-        'expectedCalvingDate':
-            expectedBreedingCalvingController.text.isNotEmpty
-                ? DateTime.parse(expectedBreedingCalvingController.text).toIso8601String()
-                : null,
-        'lastServiceDate':
-            breedingInseminationDateController.text.isNotEmpty
-                ? DateTime.parse(breedingInseminationDateController.text).toIso8601String()
-                : null,
-        'sireTag': '',
-        'damTag': '',
-
         'photoUrl': imageUrl,
       };
 
-      await FirebaseFirestore.instance.collection('animals').doc(tag).set(animalData);
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Animal saved successfully")));
-
-      Navigator.pop(context);
+      await FirebaseFirestore.instance.collection('animals').add(animalData);
+      Get.snackbar("Success", "Animal saved successfully");
+      Get.offAll(() => Homepage());
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error saving animal: $e")));
     }
@@ -113,15 +97,13 @@ class AddAnimalPageState extends State<AddAnimalPage> {
         child: Column(
           children: [
             Text("Basic Information", style: TextStyle(fontWeight: FontWeight.bold)),
+
             TextField(controller: nameController, decoration: InputDecoration(labelText: "Name/Tag")),
-            //TextField(controller: genderController, decoration: InputDecoration(labelText: "Gender")),
+            SizedBox(height: 10),
+
             DropdownButtonFormField<String>(
               value: genderController.text.isNotEmpty ? genderController.text : null,
-              decoration: InputDecoration(
-                labelText: "Gender",
-                isDense: true, // Makes the input smaller vertically
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
+              decoration: InputDecoration(labelText: "Gender"),
               items:
                   ['Male', 'Female'].map((gender) {
                     return DropdownMenuItem(value: gender, child: Text(gender));
@@ -132,19 +114,28 @@ class AddAnimalPageState extends State<AddAnimalPage> {
                 });
               },
             ),
+            SizedBox(height: 10),
 
             TextField(controller: breedController, decoration: InputDecoration(labelText: "Breed")),
+            SizedBox(height: 10),
+
             TextField(
               controller: dobController,
               decoration: InputDecoration(labelText: "Date of Birth"),
               readOnly: true,
               onTap: () => pickDate(dobController),
             ),
+            SizedBox(height: 10),
+
             TextField(controller: colorController, decoration: InputDecoration(labelText: "Color/Markings")),
+            SizedBox(height: 10),
+
             TextField(controller: weightController, decoration: InputDecoration(labelText: "Weight")),
 
+            SizedBox(height: 16),
             Text("Photo Upload", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.lightBlue)),
             SizedBox(height: 8),
+
             InkWell(
               onTap: pickImage,
               child: Container(
@@ -157,11 +148,11 @@ class AddAnimalPageState extends State<AddAnimalPage> {
                           ? DecorationImage(image: FileImage(selectedImage!), fit: BoxFit.cover)
                           : null,
                 ),
-
                 child: selectedImage == null ? Icon(Icons.add_a_photo, size: 40, color: Colors.grey[800]) : null,
               ),
             ),
             SizedBox(height: 8),
+
             ElevatedButton(onPressed: saveAnimalToFirebase, child: Text("Save")),
           ],
         ),

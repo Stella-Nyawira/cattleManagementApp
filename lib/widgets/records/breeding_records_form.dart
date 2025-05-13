@@ -1,9 +1,4 @@
-import 'dart:developer';
-
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
