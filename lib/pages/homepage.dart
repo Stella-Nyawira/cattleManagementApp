@@ -84,7 +84,7 @@ class Homepage extends StatelessWidget {
                   DashboardCard(title: "Milk Records", icon: Icons.local_drink),
                   DashboardCard(title: "Profits", icon: Icons.attach_money),
                   DashboardCard(title: "Vaccines", icon: Icons.health_and_safety),
-                  DashboardCard(title: "Upcoming breeding events", icon: Icons.upcoming),
+                  DashboardCard(title: "Upcoming events", icon: Icons.upcoming),
                   DashboardCard(
                     title: "Add Animals",
                     icon: Icons.add,

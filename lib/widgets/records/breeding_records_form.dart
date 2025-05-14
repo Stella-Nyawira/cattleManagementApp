@@ -1,64 +1,76 @@
+import 'dart:developer';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class BreedingRecordForm extends StatefulWidget {
   final String animalId;
-  final String animalName;
-
-  const BreedingRecordForm({super.key, required this.animalId, required this.animalName});
+  const BreedingRecordForm({super.key, required this.animalId});
 
   @override
   State<BreedingRecordForm> createState() => _BreedingRecordFormState();
 }
 
 class _BreedingRecordFormState extends State<BreedingRecordForm> {
-  final AnimalRecordsController recordsController = Get.find<AnimalRecordsController>();
-
-  final heatDateController = TextEditingController();
+  final AnimalRecordsController animalRecordsController = Get.find();
+  final animalNameController = TextEditingController();
+  final animalBreedController = TextEditingController();
+  final bullNameController = TextEditingController();
+  final bullBreedController = TextEditingController();
   final inseminationDateController = TextEditingController();
-  final expectedHeatDateController = TextEditingController();
-  final expectedCalvingDateController = TextEditingController();
   final vetNameController = TextEditingController();
-  final breedingMethodController = TextEditingController();
-  final bullIdController = TextEditingController();
   final notesController = TextEditingController();
 
-  String? selectedGender;
+  String? breedingMethod;
+  String? breedingSubType;
+  String? pregnancyStatus;
 
-  bool isLoading = true;
+  final List<String> breedingMethods = ['Natural', 'AI'];
+  final Map<String, List<String>> breedingSubTypes = {
+    'Natural': ['Inbreeding', 'Crossbreeding', 'Other'],
+    'AI': ['Straw', 'Embryo transfer(ET)'],
+  };
+
+  final List<String> pregnancyStatusOptions = ['Pregnant', 'Not Pregnant', 'Awaiting Scan'];
+
+  bool showForm = false;
+  List<Map<String, dynamic>> breedingRecords = [];
+  bool isLoadingRecords = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchBreedingRecord();
+    loadAnimalDetails();
+    fetchBreedingRecords();
   }
 
-  Future<void> _fetchBreedingRecord() async {
+  Future<void> loadAnimalDetails() async {
     try {
-      var records = await recordsController.fetchBreedingRecords(widget.animalId);
-      if (records.isNotEmpty) {
-        var existingRecord = records.first;
-        heatDateController.text = existingRecord['heatDate'] ?? '';
-        inseminationDateController.text = existingRecord['inseminationDate'] ?? '';
-        expectedHeatDateController.text = existingRecord['expectedHeatDate'] ?? '';
-        expectedCalvingDateController.text = existingRecord['expectedCalvingDate'] ?? '';
-        vetNameController.text = existingRecord['vetName'] ?? '';
-        breedingMethodController.text = existingRecord['breedingMethod'] ?? '';
-        bullIdController.text = existingRecord['bullId'] ?? '';
-        notesController.text = existingRecord['notes'] ?? '';
-        selectedGender = existingRecord['gender'] ?? null;
+      final animalDoc = await animalRecordsController.firestore.collection('animals').doc(widget.animalId).get();
+      if (animalDoc.exists) {
+        final animalData = animalDoc.data();
+        animalNameController.text = animalData?['name'] ?? '';
+        animalBreedController.text = animalData?['breed'] ?? '';
       }
     } catch (e) {
-      debugPrint('Error fetching breeding record: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      log('Error loading animal details: $e');
     }
   }
 
-  Future<void> _pickDate(TextEditingController controller) async {
+  Future<void> fetchBreedingRecords() async {
+    try {
+      final records = await animalRecordsController.fetchBreedingRecords(widget.animalId);
+      setState(() {
+        breedingRecords = records;
+        isLoadingRecords = false;
+      });
+    } catch (e) {
+      log('Error fetching records: $e');
+      setState(() => isLoadingRecords = false);
+    }
+  }
+
+  Future<void> pickDate(TextEditingController controller) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -66,86 +78,226 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
-      controller.text = picked.toLocal().toString().split(' ')[0];
+      controller.text = picked.toIso8601String().split('T').first;
     }
   }
 
-  Future<void> _saveBreedingRecord() async {
+  void saveRecord() async {
     final breedingData = {
-      'heatDate': heatDateController.text,
+      'animalName': animalNameController.text,
+      'animalBreed': animalBreedController.text,
+      'breedingMethod': breedingMethod,
+      'breedingSubType': breedingSubType,
+      'bullName': bullNameController.text,
+      'bullBreed': bullBreedController.text,
       'inseminationDate': inseminationDateController.text,
-      'expectedHeatDate': expectedHeatDateController.text,
-      'expectedCalvingDate': expectedCalvingDateController.text,
       'vetName': vetNameController.text,
-      'breedingMethod': breedingMethodController.text,
-      'bullId': bullIdController.text,
+      'pregnancyStatus': pregnancyStatus,
       'notes': notesController.text,
-      'gender': selectedGender,
     };
 
     try {
-      await recordsController.saveBreedingRecord(animalId: widget.animalId, breedingData: breedingData);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Breeding record saved for ${widget.animalName}')));
-      Navigator.pop(context);
+      await animalRecordsController.saveBreedingRecord(animalId: widget.animalId, breedingData: breedingData);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Breeding record saved')));
+      setState(() => showForm = false);
+      fetchBreedingRecords();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save breeding record: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error saving breeding record')));
+      log('Error saving breeding record: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Breeding Record - ${widget.animalName}')),
-      body:
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    buildDropdownField('Gender', ['Male', 'Female']),
-                    buildDateField(heatDateController, 'Heat Date'),
-                    buildDateField(inseminationDateController, 'Insemination Date'),
-                    buildDateField(expectedHeatDateController, 'Expected Heat Date'),
-                    buildDateField(expectedCalvingDateController, 'Expected Calving Date'),
-                    buildTextField(breedingMethodController, 'Method of Breeding'),
-                    buildTextField(bullIdController, 'Bull ID'),
-                    buildTextField(vetNameController, 'Veterinary Doctor Name'),
-                    buildTextField(notesController, 'Notes', maxLines: 3),
-                    const SizedBox(height: 20),
-                    ElevatedButton(onPressed: _saveBreedingRecord, child: const Text('Save Breeding Record')),
-                  ],
-                ),
+      appBar: AppBar(title: const Text('Breeding Record')),
+      body: showForm ? buildBreedingForm() : buildRecordsList(),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: Icon(showForm ? Icons.list : Icons.add),
+        label: Text(showForm ? 'View Records' : 'Add Record'),
+        onPressed: () {
+          setState(() => showForm = !showForm);
+        },
+      ),
+    );
+  }
+
+  Widget buildRecordsList() {
+    if (isLoadingRecords) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (breedingRecords.isEmpty) {
+      return const Center(child: Text('No breeding records found.'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: breedingRecords.length,
+      itemBuilder: (context, index) {
+        final record = breedingRecords[index];
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            title: Text('${record['breedingMethod']}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Date: ${record['inseminationDate'] ?? 'Unknown'}'),
+                Text('Breeding :${record["breedingSubType"] ?? 'N/A'}'),
+                Text('Bull: ${record['bullName'] ?? '-'}'),
+                Text('Vet: ${record['vetName'] ?? '-'}'),
+                Text('Status: ${record['pregnancyStatus'] ?? 'N/A'}'),
+              ],
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Delete Record'),
+                        content: const Text('Are you sure you want to delete this record?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              animalRecordsController.deleteBreedingRecord(
+                                animalId: widget.animalId,
+                                recordId: record['id'],
+                              );
+                              fetchBreedingRecords();
+                            },
+                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                          ),
+                          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                        ],
+                      ),
+                );
+              },
+            ),
+            isThreeLine: true,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildBreedingForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          sectionTitle('Animal Information'),
+          formCard([
+            buildTextField(animalNameController, 'Animal Name'),
+            buildTextField(animalBreedController, 'Animal Breed'),
+          ]),
+
+          const SizedBox(height: 20),
+          sectionTitle('Breeding Method'),
+          formCard([
+            buildDropdown('Method of Breeding', breedingMethods, breedingMethod, (value) {
+              setState(() {
+                breedingMethod = value;
+                breedingSubType = null;
+              });
+            }),
+            if (breedingMethod != null)
+              buildDropdown(
+                breedingMethod == 'Natural' ? 'Natural Breeding Type' : 'AI Type',
+                breedingSubTypes[breedingMethod!]!,
+                breedingSubType,
+                (value) => setState(() => breedingSubType = value),
               ),
+          ]),
+
+          const SizedBox(height: 20),
+          sectionTitle('Bull Information'),
+          formCard([
+            buildTextField(bullNameController, 'Bull ID / Name'),
+            buildTextField(bullBreedController, 'Bull Breed'),
+          ]),
+
+          const SizedBox(height: 20),
+          sectionTitle('Insemination Details'),
+          formCard([
+            buildDateField(inseminationDateController, 'Insemination Date'),
+            buildTextField(vetNameController, 'Veterinarian Name'),
+            buildDropdown('Pregnancy Status', pregnancyStatusOptions, pregnancyStatus, (value) {
+              setState(() => pregnancyStatus = value);
+            }),
+          ]),
+
+          const SizedBox(height: 20),
+          sectionTitle('Additional Notes'),
+          formCard([buildTextField(notesController, 'Additional Notes', maxLines: 3)]),
+
+          const SizedBox(height: 30),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: saveRecord,
+              icon: const Icon(Icons.save),
+              label: const Text('Save Breeding Record'),
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget formCard(List<Widget> children) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: children.map((e) => Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: e)).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+    );
+  }
+
+  Widget buildDropdown(String label, List<String> options, String? value, Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      value: value,
+      items: options.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+      onChanged: onChanged,
     );
   }
 
   Widget buildDateField(TextEditingController controller, String label) {
     return TextField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
       readOnly: true,
-      onTap: () => _pickDate(controller),
-    );
-  }
-
-  Widget buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
-    return TextField(controller: controller, decoration: InputDecoration(labelText: label), maxLines: maxLines);
-  }
-
-  Widget buildDropdownField(String label, List<String> options) {
-    return DropdownButtonFormField<String>(
-      value: selectedGender,
-      decoration: InputDecoration(labelText: label),
-      items: options.map((gender) => DropdownMenuItem(value: gender, child: Text(gender))).toList(),
-      onChanged: (value) {
-        setState(() {
-          selectedGender = value!;
-        });
-      },
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: const Icon(Icons.calendar_today),
+      ),
+      onTap: () => pickDate(controller),
     );
   }
 }

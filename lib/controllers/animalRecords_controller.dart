@@ -146,4 +146,12 @@ class AnimalRecordsController extends GetxController {
 
     return snapshot.docs.map((doc) => HealthRecord.fromMap(doc.data(), doc.id)).toList();
   }
+
+  Future<void> deleteBreedingRecord({required String animalId, required String recordId}) async {
+    try {
+      await firestore.collection('animals').doc(animalId).collection('breedingRecords').doc(recordId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete record: $e');
+    }
+  }
 }

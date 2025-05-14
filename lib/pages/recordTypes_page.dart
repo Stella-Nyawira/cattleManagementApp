@@ -1,6 +1,8 @@
 import 'package:cattle_managementapp/pages/milkProduction_page.dart';
 import 'package:cattle_managementapp/widgets/edit_animals.dart';
+
 import 'package:cattle_managementapp/widgets/records/breeding_records_form.dart';
+
 import 'package:cattle_managementapp/widgets/records/feeding_records_form.dart';
 import 'package:cattle_managementapp/widgets/records/vaccination_records_form.dart';
 import 'package:flutter/material.dart';
@@ -18,10 +20,12 @@ class RecordTypesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> recordTypes = [
       {'title': 'Edit Animal Details', 'icon': Icons.edit, 'pageBuilder': () => EditAnimalPage(animalId: animalId)},
+      {'title': 'Breeding Records', 'icon': MdiIcons.cow, 'pageBuilder': () => BreedingRecordForm(animalId: animalId)},
+      {'title': 'Calving Records', 'icon': MdiIcons.cow, 'pageBuilder': () => BreedingRecordForm(animalId: animalId)},
       {
-        'title': 'Breeding Records',
-        'icon': MdiIcons.cow,
-        'pageBuilder': () => BreedingRecordForm(animalId: animalId, animalName: animalName),
+        'title': 'Milk Production',
+        'icon': Icons.local_drink,
+        'pageBuilder': () => MilkProductionPage(animalId: animalId, animalName: animalName),
       },
       {
         'title': 'Health Records',
@@ -37,11 +41,6 @@ class RecordTypesPage extends StatelessWidget {
         'title': 'Feeding Records',
         'icon': MdiIcons.grass,
         'pageBuilder': () => FeedingRecordsForm(animalId: animalId, animalName: animalName),
-      },
-      {
-        'title': 'Milk Production',
-        'icon': Icons.local_drink,
-        'pageBuilder': () => MilkProductionPage(animalId: animalId, animalName: animalName),
       },
     ];
 
