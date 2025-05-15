@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:cattle_managementapp/model/calving_records_model.dart';
 import 'package:cattle_managementapp/model/milkProduction_record_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,8 @@ class AnimalRecordsController extends GetxController {
   var searchResults = <DocumentSnapshot>[].obs;
   var isLoading = false.obs;
   var searchTerm = ''.obs;
+
+  var calvingRecords = <CalvingRecord>[].obs;
 
   @override
   void onInit() {
@@ -81,6 +84,18 @@ class AnimalRecordsController extends GetxController {
       log('Failed to update breeding record: $e');
       throw Exception('Failed to update breeding record');
     }
+  }
+
+  Future<void> saveCalvingRecord(CalvingRecord record) async {
+    final doc = await firestore.collection('animals').doc(record.animalId).collection('calving').add(record.toMap());
+    record.id = doc.id;
+    fetchCalvingRecords(record.animalId); // Refresh
+  }
+
+  Future<void> fetchCalvingRecords(String animalId) async {
+    final snapshot = await firestore.collection('animals').doc(animalId).collection('calving').get();
+
+    calvingRecords.value = snapshot.docs.map((doc) => CalvingRecord.fromMap(doc.id, doc.data())).toList();
   }
 
   Future<void> saveVaccinationRecord(String animalId, Map<String, dynamic> data) async {
@@ -168,6 +183,15 @@ class AnimalRecordsController extends GetxController {
       await firestore.collection('animals').doc(animalId).collection('breedingRecords').doc(recordId).delete();
     } catch (e) {
       throw Exception('Failed to delete record: $e');
+    }
+  }
+
+  Future<void> deleteCalvingRecord({required String animalId, required String recordId}) async {
+    try {
+      await firestore.collection('animals').doc(animalId).collection('calving').doc(recordId).delete();
+      await fetchCalvingRecords(animalId); // Refresh the records list
+    } catch (e) {
+      throw Exception('Failed to delete calving record: $e');
     }
   }
 }

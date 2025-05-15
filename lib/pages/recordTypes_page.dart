@@ -1,4 +1,5 @@
 import 'package:cattle_managementapp/pages/milkProduction_page.dart';
+import 'package:cattle_managementapp/widgets/calves/calving_records_page.dart';
 import 'package:cattle_managementapp/widgets/edit_animals.dart';
 
 import 'package:cattle_managementapp/widgets/records/breeding_records_form.dart';
@@ -25,11 +26,7 @@ class RecordTypesPage extends StatelessWidget {
         'icon': MdiIcons.cow,
         'pageBuilder': () => BreedingRecordForm(animalId: animalId, animalName: animalName),
       },
-      {
-        'title': 'Calving Records',
-        'icon': MdiIcons.cow,
-        'pageBuilder': () => BreedingRecordForm(animalId: animalId, animalName: animalName),
-      },
+      {'title': 'Calving Records', 'icon': MdiIcons.cow, 'pageBuilder': () => CalvingRecordsPage(animalId: animalId)},
       {
         'title': 'Milk Production',
         'icon': Icons.local_drink,

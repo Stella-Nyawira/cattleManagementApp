@@ -30,6 +30,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
   final fifthServingDateController = TextEditingController();
   final nextExpectedHeatDateController = TextEditingController();
   final estimatedCalvingDateController = TextEditingController();
+  final newHeatDateController = TextEditingController();
 
   String? breedingMethod;
   String? breedingSubType;
@@ -95,11 +96,20 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
   void _updateAutoCalculatedDates() {
     DateTime? baseDate;
 
-    // Prefer serving date, fallback to first heat date
-    if (firstServingDateController.text.isNotEmpty) {
-      baseDate = DateTime.tryParse(firstServingDateController.text);
-    } else if (firstHeatDateController.text.isNotEmpty) {
-      baseDate = DateTime.tryParse(firstHeatDateController.text);
+    if (pregnancyStatus == 'Not Pregnant') {
+      // Use second serving if provided, else expected heat from first
+      if (secondServingDateController.text.isNotEmpty) {
+        baseDate = DateTime.tryParse(secondServingDateController.text);
+      } else if (firstServingDateController.text.isNotEmpty) {
+        baseDate = DateTime.tryParse(firstServingDateController.text)?.add(Duration(days: 21));
+        newHeatDateController.text = baseDate?.toIso8601String().split('T').first ?? '';
+      }
+    } else {
+      if (firstServingDateController.text.isNotEmpty) {
+        baseDate = DateTime.tryParse(firstServingDateController.text);
+      } else if (firstHeatDateController.text.isNotEmpty) {
+        baseDate = DateTime.tryParse(firstHeatDateController.text);
+      }
     }
 
     if (baseDate != null) {
@@ -130,6 +140,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       'pregnancyStatus': pregnancyStatus,
       'notes': notesController.text,
       'firstHeatDate': firstHeatDateController.text,
+      'newHeatDate': newHeatDateController.text,
       'firstServingDate': firstServingDateController.text,
       'secondServingDate': secondServingDateController.text,
       'thirdServingDate': thirdServingDateController.text,
@@ -256,15 +267,23 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
           const SizedBox(height: 20),
           sectionTitle('Serving Information'),
           formCard([
-            buildDateField(firstHeatDateController, 'First Heat Date'),
-            buildDateField(firstServingDateController, 'First Serving Date'),
+            buildDateField(
+              firstHeatDateController,
+              'First Heat Date',
+              readOnly: pregnancyStatus == 'Not Pregnant', // prevent edits if failed
+            ),
+            buildDateField(
+              firstServingDateController,
+              'First Serving Date',
+              readOnly: pregnancyStatus == 'Not Pregnant',
+            ),
             if (pregnancyStatus == 'Not Pregnant') ...[
+              buildDateField(newHeatDateController, 'Heat After Failed Serving', readOnly: true),
               buildDateField(secondServingDateController, 'Second Serving Date'),
-              buildDateField(thirdServingDateController, 'Third Serving Date'),
-              buildDateField(fifthServingDateController, 'forth Serving Date'),
             ],
-            buildDateField(nextExpectedHeatDateController, 'Next Expected Heat Date'),
+            buildDateField(nextExpectedHeatDateController, 'Next Expected Heat Date', readOnly: true),
           ]),
+
           const SizedBox(height: 20),
           sectionTitle('Breeding Method'),
           formCard([
@@ -354,7 +373,20 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     );
   }
 
-  Widget buildDateField(TextEditingController controller, String label) {
+  Widget buildDateField(TextEditingController controller, String label, {bool readOnly = false}) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon:
+            readOnly ? null : IconButton(icon: const Icon(Icons.calendar_today), onPressed: () => pickDate(controller)),
+      ),
+      onTap: readOnly ? null : () => pickDate(controller),
+    );
+  }
+
+  /*  Widget buildDateField(TextEditingController controller, String label) {
     return TextField(
       controller: controller,
       readOnly: true,
@@ -365,5 +397,5 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       ),
       onTap: () => pickDate(controller),
     );
-  }
+  } */
 }
