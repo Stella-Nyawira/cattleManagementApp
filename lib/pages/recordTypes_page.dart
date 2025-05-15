@@ -20,8 +20,16 @@ class RecordTypesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> recordTypes = [
       {'title': 'Edit Animal Details', 'icon': Icons.edit, 'pageBuilder': () => EditAnimalPage(animalId: animalId)},
-      {'title': 'Breeding Records', 'icon': MdiIcons.cow, 'pageBuilder': () => BreedingRecordForm(animalId: animalId)},
-      {'title': 'Calving Records', 'icon': MdiIcons.cow, 'pageBuilder': () => BreedingRecordForm(animalId: animalId)},
+      {
+        'title': 'Breeding Records',
+        'icon': MdiIcons.cow,
+        'pageBuilder': () => BreedingRecordForm(animalId: animalId, animalName: animalName),
+      },
+      {
+        'title': 'Calving Records',
+        'icon': MdiIcons.cow,
+        'pageBuilder': () => BreedingRecordForm(animalId: animalId, animalName: animalName),
+      },
       {
         'title': 'Milk Production',
         'icon': Icons.local_drink,

@@ -5,9 +5,10 @@ import 'package:get/get.dart';
 
 class BreedingRecordsPage extends StatelessWidget {
   final String animalId;
+  final String animalName;
   final AnimalRecordsController controller = Get.put(AnimalRecordsController());
 
-  BreedingRecordsPage({super.key, required this.animalId});
+  BreedingRecordsPage({super.key, required this.animalId, required this.animalName});
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +59,7 @@ class BreedingRecordsPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Get.to(() => BreedingRecordForm(animalId: animalId));
+          Get.to(() => BreedingRecordForm(animalId: animalId, animalName: 'Animal Name'));
         },
         child: const Icon(Icons.add),
         tooltip: 'Add Breeding Record',

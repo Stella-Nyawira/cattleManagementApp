@@ -67,6 +67,22 @@ class AnimalRecordsController extends GetxController {
     }).toList();
   }
 
+  Future<void> updateBreedingRecord({
+    required String animalId,
+    required String recordId,
+    required Map<String, dynamic> updatedData,
+  }) async {
+    try {
+      await firestore.collection('animals').doc(animalId).collection('breedingRecords').doc(recordId).update({
+        ...updatedData,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log('Failed to update breeding record: $e');
+      throw Exception('Failed to update breeding record');
+    }
+  }
+
   Future<void> saveVaccinationRecord(String animalId, Map<String, dynamic> data) async {
     await firestore.collection('animals').doc(animalId).collection('vaccinationRecords').add(data);
   }

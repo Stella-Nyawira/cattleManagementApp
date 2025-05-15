@@ -1,11 +1,13 @@
 import 'dart:developer';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
+import 'package:cattle_managementapp/widgets/edit/edit_breeding_records.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class BreedingRecordForm extends StatefulWidget {
   final String animalId;
-  const BreedingRecordForm({super.key, required this.animalId});
+  final String animalName;
+  const BreedingRecordForm({super.key, required this.animalId, required this.animalName});
 
   @override
   State<BreedingRecordForm> createState() => _BreedingRecordFormState();
@@ -21,6 +23,14 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
   final vetNameController = TextEditingController();
   final notesController = TextEditingController();
 
+  final firstHeatDateController = TextEditingController();
+  final firstServingDateController = TextEditingController();
+  final secondServingDateController = TextEditingController();
+  final thirdServingDateController = TextEditingController();
+  final fifthServingDateController = TextEditingController();
+  final nextExpectedHeatDateController = TextEditingController();
+  final estimatedCalvingDateController = TextEditingController();
+
   String? breedingMethod;
   String? breedingSubType;
   String? pregnancyStatus;
@@ -30,7 +40,6 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     'Natural': ['Inbreeding', 'Crossbreeding', 'Other'],
     'AI': ['Straw', 'Embryo transfer(ET)'],
   };
-
   final List<String> pregnancyStatusOptions = ['Pregnant', 'Not Pregnant', 'Awaiting Scan'];
 
   bool showForm = false;
@@ -79,6 +88,32 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     );
     if (picked != null) {
       controller.text = picked.toIso8601String().split('T').first;
+      _updateAutoCalculatedDates();
+    }
+  }
+
+  void _updateAutoCalculatedDates() {
+    DateTime? baseDate;
+
+    // Prefer serving date, fallback to first heat date
+    if (firstServingDateController.text.isNotEmpty) {
+      baseDate = DateTime.tryParse(firstServingDateController.text);
+    } else if (firstHeatDateController.text.isNotEmpty) {
+      baseDate = DateTime.tryParse(firstHeatDateController.text);
+    }
+
+    if (baseDate != null) {
+      nextExpectedHeatDateController.text = baseDate.add(const Duration(days: 21)).toIso8601String().split('T').first;
+
+      if (pregnancyStatus == 'Pregnant') {
+        estimatedCalvingDateController.text =
+            baseDate.add(const Duration(days: 283)).toIso8601String().split('T').first;
+      } else {
+        estimatedCalvingDateController.text = '';
+      }
+    } else {
+      nextExpectedHeatDateController.text = '';
+      estimatedCalvingDateController.text = '';
     }
   }
 
@@ -94,6 +129,13 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       'vetName': vetNameController.text,
       'pregnancyStatus': pregnancyStatus,
       'notes': notesController.text,
+      'firstHeatDate': firstHeatDateController.text,
+      'firstServingDate': firstServingDateController.text,
+      'secondServingDate': secondServingDateController.text,
+      'thirdServingDate': thirdServingDateController.text,
+      'forthServingDate': fifthServingDateController.text,
+      'nextExpectedHeatDate': nextExpectedHeatDateController.text,
+      'estimatedCalvingDate': estimatedCalvingDateController.text,
     };
 
     try {
@@ -107,6 +149,13 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
     }
   }
 
+  void onPregnancyStatusChanged(String? newStatus) {
+    setState(() {
+      pregnancyStatus = newStatus;
+      _updateAutoCalculatedDates();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,21 +164,14 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
       floatingActionButton: FloatingActionButton.extended(
         icon: Icon(showForm ? Icons.list : Icons.add),
         label: Text(showForm ? 'View Records' : 'Add Record'),
-        onPressed: () {
-          setState(() => showForm = !showForm);
-        },
+        onPressed: () => setState(() => showForm = !showForm),
       ),
     );
   }
 
   Widget buildRecordsList() {
-    if (isLoadingRecords) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (breedingRecords.isEmpty) {
-      return const Center(child: Text('No breeding records found.'));
-    }
+    if (isLoadingRecords) return const Center(child: CircularProgressIndicator());
+    if (breedingRecords.isEmpty) return const Center(child: Text('No breeding records found.'));
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -146,9 +188,12 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Date: ${record['inseminationDate'] ?? 'Unknown'}'),
-                Text('Breeding :${record["breedingSubType"] ?? 'N/A'}'),
-                Text('Bull: ${record['bullName'] ?? '-'}'),
-                Text('Vet: ${record['vetName'] ?? '-'}'),
+                Text('Breeding: ${record['breedingSubType'] ?? 'N/A'}'),
+                Text(
+                  record['breedingMethod'] == 'Natural'
+                      ? 'Bull: ${record['bullName'] ?? '-'}'
+                      : 'Inseminated by: ${record['vetName'] ?? '-'}',
+                ),
                 Text('Status: ${record['pregnancyStatus'] ?? 'N/A'}'),
               ],
             ),
@@ -180,6 +225,17 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
               },
             ),
             isThreeLine: true,
+            onTap: () async {
+              final updated = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => EditBreedingRecordPage(animalId: widget.animalId, breedingRecord: record),
+                ),
+              );
+              if (updated == true) {
+                // Refresh after edit if needed
+                fetchBreedingRecords();
+              }
+            },
           ),
         );
       },
@@ -197,7 +253,18 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
             buildTextField(animalNameController, 'Animal Name'),
             buildTextField(animalBreedController, 'Animal Breed'),
           ]),
-
+          const SizedBox(height: 20),
+          sectionTitle('Serving Information'),
+          formCard([
+            buildDateField(firstHeatDateController, 'First Heat Date'),
+            buildDateField(firstServingDateController, 'First Serving Date'),
+            if (pregnancyStatus == 'Not Pregnant') ...[
+              buildDateField(secondServingDateController, 'Second Serving Date'),
+              buildDateField(thirdServingDateController, 'Third Serving Date'),
+              buildDateField(fifthServingDateController, 'forth Serving Date'),
+            ],
+            buildDateField(nextExpectedHeatDateController, 'Next Expected Heat Date'),
+          ]),
           const SizedBox(height: 20),
           sectionTitle('Breeding Method'),
           formCard([
@@ -215,28 +282,27 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
                 (value) => setState(() => breedingSubType = value),
               ),
           ]),
-
           const SizedBox(height: 20),
-          sectionTitle('Bull Information'),
+          sectionTitle('Bull / Insemination Information'),
           formCard([
-            buildTextField(bullNameController, 'Bull ID / Name'),
-            buildTextField(bullBreedController, 'Bull Breed'),
+            if (breedingMethod == 'Natural') ...[
+              buildTextField(bullNameController, 'Bull ID / Name'),
+              buildTextField(bullBreedController, 'Bull Breed'),
+            ],
+            if (breedingMethod == 'AI') ...[
+              buildDateField(inseminationDateController, 'Insemination Date'),
+              buildTextField(vetNameController, 'Veterinarian Name'),
+            ],
           ]),
-
           const SizedBox(height: 20),
-          sectionTitle('Insemination Details'),
+          sectionTitle(' Pregnancy'),
           formCard([
-            buildDateField(inseminationDateController, 'Insemination Date'),
-            buildTextField(vetNameController, 'Veterinarian Name'),
-            buildDropdown('Pregnancy Status', pregnancyStatusOptions, pregnancyStatus, (value) {
-              setState(() => pregnancyStatus = value);
-            }),
+            buildDropdown('Pregnancy Status', pregnancyStatusOptions, pregnancyStatus, onPregnancyStatusChanged),
+            buildDateField(estimatedCalvingDateController, 'Estimated Calving Date'),
           ]),
-
           const SizedBox(height: 20),
           sectionTitle('Additional Notes'),
           formCard([buildTextField(notesController, 'Additional Notes', maxLines: 3)]),
-
           const SizedBox(height: 30),
           Center(
             child: ElevatedButton.icon(
