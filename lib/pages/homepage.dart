@@ -1,5 +1,7 @@
 import 'package:cattle_managementapp/auth/sign_in_page.dart';
+import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/controllers/auth_controller.dart';
+import 'package:cattle_managementapp/pages/vaccinationRecords_page.dart';
 import 'package:cattle_managementapp/utils/dashBoard_cards.dart';
 import 'package:cattle_managementapp/widgets/add_animals.dart';
 import 'package:cattle_managementapp/widgets/view_animals.dart';
@@ -12,6 +14,7 @@ class Homepage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
+    final AnimalRecordsController animalRecordsController = Get.put(AnimalRecordsController());
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +57,10 @@ class Homepage extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [buildSummaryItems("Livestock", "25 Cows"), buildSummaryItems("Next Vaccine", "3 days")],
+                    children: [
+                      Obx(() => buildSummaryItems("Livestock", "${animalRecordsController.totalAnimals.value} Cows")),
+                      buildSummaryItems("Next Vaccine", "3 days"),
+                    ],
                   ),
                   SizedBox(height: 4),
                   Row(
@@ -83,7 +89,11 @@ class Homepage extends StatelessWidget {
                   ),
                   DashboardCard(title: "Milk Records", icon: Icons.local_drink),
                   DashboardCard(title: "Profits", icon: Icons.attach_money),
-                  DashboardCard(title: "Vaccines", icon: Icons.health_and_safety),
+                  DashboardCard(
+                    title: "Vaccines",
+                    icon: Icons.health_and_safety,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VaccinationRecordsPage())),
+                  ),
                   DashboardCard(title: "Upcoming events", icon: Icons.upcoming),
                   DashboardCard(
                     title: "Add Animals",

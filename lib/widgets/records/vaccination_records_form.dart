@@ -89,40 +89,83 @@ class _VaccinationRecordsFormState extends State<VaccinationRecordsForm> {
       appBar: AppBar(title: Text('Vaccination Record - ${widget.animalName}')),
       body:
           isLoading
-              ? Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: vaccineNameController,
-                      decoration: InputDecoration(labelText: 'Vaccine Name'),
+                child: Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Vaccine Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Divider(height: 24),
+                        TextFormField(
+                          controller: vaccineNameController,
+                          decoration: const InputDecoration(labelText: 'Vaccine Name', border: OutlineInputBorder()),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: dateAdministeredController,
+                          decoration: const InputDecoration(
+                            labelText: 'Date Administered',
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                          onTap: () => pickDate(dateAdministeredController),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: nextDueDateController,
+                          decoration: const InputDecoration(
+                            labelText: 'Next Due Date',
+                            prefixIcon: Icon(Icons.event_available),
+                            border: OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                          onTap: () => pickDate(nextDueDateController),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text('Veterinarian Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Divider(height: 24),
+                        TextFormField(
+                          controller: vetNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Veterinarian Name',
+                            prefixIcon: Icon(Icons.person),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: notesController,
+                          decoration: const InputDecoration(
+                            labelText: 'Notes',
+                            alignLabelWithHint: true,
+                            prefixIcon: Icon(Icons.note_alt),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.save),
+                            label: const Text('Save Vaccination Record'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
+                            onPressed: saveVaccinationRecord,
+                          ),
+                        ),
+                      ],
                     ),
-                    TextFormField(
-                      controller: dateAdministeredController,
-                      decoration: InputDecoration(labelText: 'Date Administered'),
-                      readOnly: true,
-                      onTap: () => pickDate(dateAdministeredController),
-                    ),
-                    TextFormField(
-                      controller: nextDueDateController,
-                      decoration: InputDecoration(labelText: 'Next Due Date'),
-                      readOnly: true,
-                      onTap: () => pickDate(nextDueDateController),
-                    ),
-                    TextFormField(
-                      controller: vetNameController,
-                      decoration: InputDecoration(labelText: 'Veterinarian Name'),
-                    ),
-                    TextFormField(
-                      controller: notesController,
-                      decoration: InputDecoration(labelText: 'Notes'),
-                      maxLines: 3,
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(onPressed: saveVaccinationRecord, child: Text('Save Vaccination Record')),
-                  ],
+                  ),
                 ),
               ),
     );

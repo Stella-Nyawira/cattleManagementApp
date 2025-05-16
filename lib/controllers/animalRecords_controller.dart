@@ -12,13 +12,16 @@ class AnimalRecordsController extends GetxController {
   var searchResults = <DocumentSnapshot>[].obs;
   var isLoading = false.obs;
   var searchTerm = ''.obs;
+  var totalAnimals = 0.obs;
 
   var calvingRecords = <CalvingRecord>[].obs;
+  var vaccinationRecords = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchAllAnimals();
+    fetchAllVaccinationRecords();
   }
 
   Future<void> fetchAllAnimals() async {
@@ -27,6 +30,8 @@ class AnimalRecordsController extends GetxController {
       final snapshot = await firestore.collection('animals').get();
       allAnimals.value = snapshot.docs;
       searchResults.value = snapshot.docs;
+      totalAnimals.value = snapshot.docs.length;
+      // Check for notifications after fetching animals
     } catch (e) {
       log('Error fetching animals: $e');
     } finally {
@@ -193,5 +198,16 @@ class AnimalRecordsController extends GetxController {
     } catch (e) {
       throw Exception('Failed to delete calving record: $e');
     }
+  }
+
+  // Fetch all vaccine records across all animals
+  Future<void> fetchAllVaccinationRecords() async {
+    final snapshot = await firestore.collectionGroup('vaccinationRecords').get();
+    vaccinationRecords.value =
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['animalId'] = doc.reference.parent.parent?.id;
+          return data;
+        }).toList();
   }
 }

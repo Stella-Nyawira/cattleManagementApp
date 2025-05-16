@@ -2,6 +2,7 @@ import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/widgets/records/breeding_records_form.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class BreedingRecordsPage extends StatelessWidget {
   final String animalId;
@@ -46,7 +47,8 @@ class BreedingRecordsPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (record['bullName'] != null) Text('Bull: ${record['bullName']} (${record['bullBreed']})'),
-                      if (record['inseminationDate'] != null) Text('Date: ${record['inseminationDate']}'),
+                      if (record['inseminationDate'] != null)
+                        Text('Date: ${DateFormat.yMMMd().format(DateTime.parse(record['inseminationDate']))}'),
                       if (record['pregnancyStatus'] != null) Text('Status: ${record['pregnancyStatus']}'),
                       if (record['notes'] != null) Text('Notes: ${record['notes']}'),
                     ],
@@ -59,7 +61,7 @@ class BreedingRecordsPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Get.to(() => BreedingRecordForm(animalId: animalId, animalName: 'Animal Name'));
+          Get.to(() => BreedingRecordForm(animalId: animalId, animalName: animalName));
         },
         child: const Icon(Icons.add),
         tooltip: 'Add Breeding Record',
