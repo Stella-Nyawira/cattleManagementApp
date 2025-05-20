@@ -15,19 +15,7 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Notifications"),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.orange.shade600, Colors.deepOrange.shade400],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        elevation: 4,
-      ),
+      appBar: AppBar(title: Text("Notifications"), backgroundColor: Colors.greenAccent, elevation: 4),
       body: Obx(() {
         final notifications = controller.notificationsList;
         if (notifications.isEmpty) {

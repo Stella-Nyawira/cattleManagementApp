@@ -1,14 +1,13 @@
+import 'package:cattle_managementapp/pages/healthRecords_page.dart';
 import 'package:cattle_managementapp/pages/milkProduction_page.dart';
+import 'package:cattle_managementapp/pages/vaccinationRecords_page.dart';
 import 'package:cattle_managementapp/widgets/calves/calving_records_page.dart';
 import 'package:cattle_managementapp/widgets/edit_animals.dart';
 
 import 'package:cattle_managementapp/widgets/records/breeding_records_form.dart';
-
-import 'package:cattle_managementapp/widgets/records/feeding_records_form.dart';
 import 'package:cattle_managementapp/widgets/records/vaccination_records_form.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cattle_managementapp/widgets/records/health_records_form.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class RecordTypesPage extends StatelessWidget {
@@ -35,18 +34,18 @@ class RecordTypesPage extends StatelessWidget {
       {
         'title': 'Health Records',
         'icon': Icons.health_and_safety,
-        'pageBuilder': () => HealthRecordsForm(animalId: animalId, animalName: animalName),
+        'pageBuilder': () => HealthRecordsPage(animalId: animalId, animalName: animalName),
       },
       {
         'title': 'Vaccination Records',
         'icon': Icons.local_hospital,
-        'pageBuilder': () => VaccinationRecordsForm(animalId: animalId, animalName: animalName),
+        'pageBuilder': () => VaccinationRecordsPage(animalId: animalId, animalName: animalName),
       },
-      {
+      /* {
         'title': 'Feeding Records',
         'icon': MdiIcons.grass,
         'pageBuilder': () => FeedingRecordsForm(animalId: animalId, animalName: animalName),
-      },
+      }, */
     ];
 
     return Scaffold(

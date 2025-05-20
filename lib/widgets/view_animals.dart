@@ -69,8 +69,9 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
     setState(() {
       filteredAnimals =
           allAnimals.where((animal) {
-            final name = animal['name']?.toLowerCase() ?? '';
-            final breed = animal['breed']?.toLowerCase() ?? '';
+            final data = animal.data() as Map<String, dynamic>;
+            final name = (data['name'] ?? '').toString().toLowerCase();
+            final breed = (data['breed'] ?? '').toString().toLowerCase();
             final searchQuery = query.toLowerCase();
             return name.contains(searchQuery) || breed.contains(searchQuery);
           }).toList();
@@ -178,11 +179,12 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                   itemCount: filteredAnimals.length,
                   itemBuilder: (context, index) {
                     var animal = filteredAnimals[index];
-                    String? photoUrl = animal['photoUrl'];
+                    final data = animal.data() as Map<String, dynamic>;
+                    String? photoUrl = data['photoUrl'];
 
                     return InkWell(
                       onTap: () {
-                        Get.to(() => RecordTypesPage(animalId: animal.id, animalName: animal['name']));
+                        Get.to(() => RecordTypesPage(animalId: animal.id, animalName: data['name']));
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -204,19 +206,19 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    animal['name'] ?? 'Unnamed Animal',
+                                    data['name'] ?? 'Unnamed Animal',
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text('Breed: ${animal['breed'] ?? 'Unknown'}'),
-                                  Text('Gender: ${animal['gender'] ?? 'Unknown'}'),
-                                  Text('Weight: ${animal['weight']?.toString() ?? 'Unknown'} kg'),
+                                  Text('Breed: ${data['breed'] ?? 'Unknown'}'),
+                                  Text('Gender: ${data['gender'] ?? 'Unknown'}'),
+                                  Text('Weight: ${data['weight']?.toString() ?? 'Unknown'} kg'),
                                 ],
                               ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => confirmDelete(animal.id, animal['name'] ?? 'this animal'),
+                              onPressed: () => confirmDelete(animal.id, data['name'] ?? 'this animal'),
                             ),
                           ],
                         ),

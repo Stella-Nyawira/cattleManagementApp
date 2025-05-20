@@ -1,23 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MilkProductionRecord {
-  final String id;
-  final double quantity;
-  final DateTime date;
-  final String? notes;
+  String id;
+  DateTime date;
+  double amountMorning;
+  double amountEvening;
+  String notes;
 
-  MilkProductionRecord({required this.id, required this.quantity, required this.date, this.notes});
+  MilkProductionRecord({
+    required this.id,
+    required this.date,
+    required this.amountMorning,
+    required this.amountEvening,
+    this.notes = '',
+  });
 
   factory MilkProductionRecord.fromMap(Map<String, dynamic> data, String id) {
     return MilkProductionRecord(
       id: id,
-      quantity: (data['quantity'] ?? 0).toDouble(),
       date: (data['date'] as Timestamp).toDate(),
-      notes: data['notes'],
+      amountMorning: (data['amountMorning'] ?? 0).toDouble(),
+      amountEvening: (data['amountEvening'] ?? 0).toDouble(),
+      notes: data['notes'] ?? '',
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {'quantity': quantity, 'date': date, 'notes': notes};
+    return {'date': date, 'amountMorning': amountMorning, 'amountEvening': amountEvening, 'notes': notes};
   }
 }

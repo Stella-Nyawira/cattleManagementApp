@@ -8,6 +8,8 @@ class CalvingRecord {
   String complications;
   String vetName;
   String notes;
+  String? calfBreed;
+  double? calfWeight;
 
   CalvingRecord({
     this.id,
@@ -19,6 +21,8 @@ class CalvingRecord {
     required this.complications,
     required this.vetName,
     required this.notes,
+    this.calfBreed,
+    this.calfWeight,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +35,8 @@ class CalvingRecord {
       'complications': complications,
       'vetName': vetName,
       'notes': notes,
+      'calfBreed': calfBreed,
+      'calfWeight': calfWeight,
     };
   }
 
@@ -45,6 +51,8 @@ class CalvingRecord {
       complications: map['complications'] ?? '',
       vetName: map['vetName'] ?? '',
       notes: map['notes'] ?? '',
+      calfBreed: map['calfBreed'],
+      calfWeight: (map['calfWeight'] != null) ? (map['calfWeight'] as num).toDouble() : null,
     );
   }
 }

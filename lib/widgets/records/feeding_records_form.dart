@@ -2,7 +2,7 @@ import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class FeedingRecordsForm extends StatefulWidget {
+/* class FeedingRecordsForm extends StatefulWidget {
   final String animalId;
   final String animalName;
 
@@ -94,3 +94,4 @@ class _FeedingRecordsFormState extends State<FeedingRecordsForm> {
     return TextField(controller: controller, decoration: InputDecoration(labelText: label), maxLines: maxLines);
   }
 }
+ */

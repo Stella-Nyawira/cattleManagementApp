@@ -1,9 +1,10 @@
 import 'package:cattle_managementapp/auth/sign_in_page.dart';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/controllers/auth_controller.dart';
-import 'package:cattle_managementapp/pages/vaccinationRecords_page.dart';
 import 'package:cattle_managementapp/utils/dashBoard_cards.dart';
 import 'package:cattle_managementapp/widgets/add_animals.dart';
+import 'package:cattle_managementapp/widgets/allAnimalsInfo/all_animal_vaccines_page.dart';
+import 'package:cattle_managementapp/widgets/events/upcoming_event_page.dart';
 import 'package:cattle_managementapp/widgets/view_animals.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -92,9 +93,13 @@ class Homepage extends StatelessWidget {
                   DashboardCard(
                     title: "Vaccines",
                     icon: Icons.health_and_safety,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VaccinationRecordsPage())),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AllAnimalVaccinesPage())),
                   ),
-                  DashboardCard(title: "Upcoming events", icon: Icons.upcoming),
+                  DashboardCard(
+                    title: "Upcoming events",
+                    icon: Icons.upcoming,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UpcomingEventsPage())),
+                  ),
                   DashboardCard(
                     title: "Add Animals",
                     icon: Icons.add,

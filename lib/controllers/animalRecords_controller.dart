@@ -1,9 +1,9 @@
 import 'dart:developer';
 import 'package:cattle_managementapp/model/calving_records_model.dart';
+import 'package:cattle_managementapp/model/events_model.dart';
 import 'package:cattle_managementapp/model/milkProduction_record_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:cattle_managementapp/model/healthRecord_model.dart';
 
 class AnimalRecordsController extends GetxController {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -16,6 +16,10 @@ class AnimalRecordsController extends GetxController {
 
   var calvingRecords = <CalvingRecord>[].obs;
   var vaccinationRecords = <Map<String, dynamic>>[].obs;
+  var vaccinationRecordsMap = <String, List<Map<String, dynamic>>>{}.obs;
+  var healthRecords = <Map<String, dynamic>>[].obs;
+
+  RxList<UpcomingEvent> upcomingEvents = <UpcomingEvent>[].obs;
 
   @override
   void onInit() {
@@ -94,7 +98,28 @@ class AnimalRecordsController extends GetxController {
   Future<void> saveCalvingRecord(CalvingRecord record) async {
     final doc = await firestore.collection('animals').doc(record.animalId).collection('calving').add(record.toMap());
     record.id = doc.id;
-    fetchCalvingRecords(record.animalId); // Refresh
+
+    // 🔄 Fetch parent animal
+    final parentSnapshot = await FirebaseFirestore.instance.collection('animals').doc(record.animalId).get();
+
+    if (parentSnapshot.exists) {
+      final parentData = parentSnapshot.data()!;
+      final parentBreed = parentData['breed'] ?? 'Unknown';
+
+      // 🐮 Create new calf animal
+      final calfData = {
+        'name': record.calfName,
+        'gender': record.calfGender,
+        'birthDate': record.birthDate,
+        'breed': parentBreed,
+        'motherId': record.animalId,
+        'isCalf': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+      log('Calf data being saved: $calfData');
+
+      await FirebaseFirestore.instance.collection('animals').add(calfData);
+    }
   }
 
   Future<void> fetchCalvingRecords(String animalId) async {
@@ -119,7 +144,12 @@ class AnimalRecordsController extends GetxController {
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
-  Future<void> saveFeedingRecord(String animalId, Map<String, dynamic> feedingData) async {
+  Future<void> loadVaccinationRecords(String animalId) async {
+    final records = await fetchVaccinationRecords(animalId);
+    vaccinationRecords.value = records;
+  }
+
+  /* Future<void> saveFeedingRecord(String animalId, Map<String, dynamic> feedingData) async {
     try {
       await firestore.collection('animals').doc(animalId).collection('feedingRecords').add(feedingData);
     } catch (e) {
@@ -144,7 +174,7 @@ class AnimalRecordsController extends GetxController {
       return [];
     }
   }
-
+ */
   Future<void> saveMilkRecord(String animalId, Map<String, dynamic> milkData) async {
     await firestore.collection('animals').doc(animalId).collection('milkProductionRecords').add({
       ...milkData,
@@ -164,23 +194,44 @@ class AnimalRecordsController extends GetxController {
     return snapshot.docs.map((doc) => MilkProductionRecord.fromMap(doc.data(), doc.id)).toList();
   }
 
-  Future<void> saveHealthRecord(String animalId, Map<String, dynamic> data) async {
-    await firestore.collection('animals').doc(animalId).collection('healthRecords').add({
-      ...data,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+  Future<void> addHealthRecord(String animalId, Map<String, dynamic> data) async {
+    try {
+      await firestore.collection('animals').doc(animalId).collection('healthRecords').add({
+        ...data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      await fetchHealthRecords(animalId); // Refresh after saving
+    } catch (e) {
+      log('Error adding health record: $e');
+      rethrow;
+    }
   }
 
-  Future<List<HealthRecord>> fetchHealthRecords(String animalId) async {
-    final snapshot =
-        await firestore
-            .collection('animals')
-            .doc(animalId)
-            .collection('healthRecords')
-            .orderBy('createdAt', descending: true)
-            .get();
+  Future<List<Map<String, dynamic>>> fetchHealthRecords(String animalId) async {
+    try {
+      final snapshot =
+          await firestore
+              .collection('animals')
+              .doc(animalId)
+              .collection('healthRecords')
+              .orderBy('createdAt', descending: true)
+              .get();
 
-    return snapshot.docs.map((doc) => HealthRecord.fromMap(doc.data(), doc.id)).toList();
+      final records =
+          snapshot.docs.map((doc) {
+            var data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList();
+
+      healthRecords.value = records; // Keep your observable updated too
+
+      return records; // Return the list of records here
+    } catch (e) {
+      log('Error fetching health records: $e');
+      healthRecords.value = [];
+      return [];
+    }
   }
 
   Future<void> deleteBreedingRecord({required String animalId, required String recordId}) async {
@@ -203,11 +254,44 @@ class AnimalRecordsController extends GetxController {
   // Fetch all vaccine records across all animals
   Future<void> fetchAllVaccinationRecords() async {
     final snapshot = await firestore.collectionGroup('vaccinationRecords').get();
-    vaccinationRecords.value =
+
+    final allRecords =
         snapshot.docs.map((doc) {
           final data = doc.data();
-          data['animalId'] = doc.reference.parent.parent?.id;
-          return data;
+          return {
+            'id': doc.id, // add doc ID here
+            ...data,
+            'animalId': doc.reference.parent.parent?.id,
+          };
         }).toList();
+
+    vaccinationRecords.value = allRecords;
+
+    // Group by animalId
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    for (var record in allRecords) {
+      final animalId = record['animalId'] ?? 'unknown';
+      grouped.putIfAbsent(animalId, () => []).add(record);
+    }
+    vaccinationRecordsMap.value = grouped;
+  }
+
+  Future<void> deleteHealthRecord({required String animalId, required String recordId}) async {
+    try {
+      await firestore.collection('animals').doc(animalId).collection('healthRecords').doc(recordId).delete();
+    } catch (e) {
+      log('Error deleting health record: $e');
+      throw Exception('Failed to delete health record');
+    }
+  }
+
+  Future<void> fetchUpcomingEvents() async {
+    final snapshot = await FirebaseFirestore.instance.collection('upcomingEvents').orderBy('eventDate').get();
+    upcomingEvents.value = snapshot.docs.map((doc) => UpcomingEvent.fromMap(doc.data())).toList();
+  }
+
+  Future<void> addUpcomingEvent(UpcomingEvent event) async {
+    await FirebaseFirestore.instance.collection('upcomingEvents').doc(event.id).set(event.toMap());
+    await fetchUpcomingEvents(); // Refresh after adding
   }
 }

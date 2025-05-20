@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,8 +5,9 @@ import 'package:get/get.dart';
 class VaccinationRecordsForm extends StatefulWidget {
   final String animalId;
   final String animalName;
+  final Map<String, dynamic>? existingRecord;
 
-  const VaccinationRecordsForm({super.key, required this.animalId, required this.animalName});
+  const VaccinationRecordsForm({super.key, required this.animalId, required this.animalName, this.existingRecord});
 
   @override
   _VaccinationRecordsFormState createState() => _VaccinationRecordsFormState();
@@ -28,27 +27,20 @@ class _VaccinationRecordsFormState extends State<VaccinationRecordsForm> {
   @override
   void initState() {
     super.initState();
-    fetchVaccinationRecord();
+    if (widget.existingRecord != null) {
+      prefillForm(widget.existingRecord!);
+    }
+    setState(() {
+      isLoading = false;
+    });
   }
 
-  Future<void> fetchVaccinationRecord() async {
-    try {
-      final records = await recordsController.fetchVaccinationRecords(widget.animalId);
-      if (records.isNotEmpty) {
-        final existing = records.first;
-        vaccineNameController.text = existing['vaccineName'] ?? '';
-        dateAdministeredController.text = existing['dateAdministered'] ?? '';
-        nextDueDateController.text = existing['nextDueDate'] ?? '';
-        vetNameController.text = existing['vetName'] ?? '';
-        notesController.text = existing['notes'] ?? '';
-      }
-    } catch (e) {
-      log('Error fetching vaccination records: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
+  void prefillForm(Map<String, dynamic> record) {
+    vaccineNameController.text = record['vaccineName'] ?? '';
+    dateAdministeredController.text = record['dateAdministered'] ?? '';
+    nextDueDateController.text = record['nextDueDate'] ?? '';
+    vetNameController.text = record['vetName'] ?? '';
+    notesController.text = record['notes'] ?? '';
   }
 
   Future<void> pickDate(TextEditingController controller) async {
@@ -77,7 +69,18 @@ class _VaccinationRecordsFormState extends State<VaccinationRecordsForm> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Vaccination record saved for ${widget.animalName}')));
-      Navigator.pop(context);
+
+      if (widget.existingRecord == null) {
+        // If it was a new record, clear the form
+        vaccineNameController.clear();
+        dateAdministeredController.clear();
+        nextDueDateController.clear();
+        vetNameController.clear();
+        notesController.clear();
+      } else {
+        // If editing, go back
+        Navigator.pop(context);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save record: $e')));
     }
