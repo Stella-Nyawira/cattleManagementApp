@@ -51,7 +51,7 @@ class _HealthRecordsPageState extends State<HealthRecordsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Health Records for ${widget.animalName}', style: TextStyle(fontSize: 14))),
+      appBar: AppBar(title: Text('Health Records for ${widget.animalName}')),
       body: Obx(() {
         if (controller.healthRecords.isEmpty) {
           return Center(child: Text('No health records found'));

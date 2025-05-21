@@ -294,4 +294,13 @@ class AnimalRecordsController extends GetxController {
     await FirebaseFirestore.instance.collection('upcomingEvents').doc(event.id).set(event.toMap());
     await fetchUpcomingEvents(); // Refresh after adding
   }
+
+  Future<void> deleteUpcomingEvent(String eventId) async {
+    try {
+      await FirebaseFirestore.instance.collection('upcomingEvents').doc(eventId).delete();
+      upcomingEvents.removeWhere((event) => event.id == eventId); // Update UI instantly
+    } catch (e) {
+      log('Error deleting event: $e');
+    }
+  }
 }

@@ -22,8 +22,9 @@ class NotificationsController extends GetxController {
       for (var animal in snapshot.docs) {
         _checkBreedingRecords(animal.id, animal['name'], alertThreshold);
         _checkVaccinationRecords(animal.id, animal['name'], alertThreshold); // Pass DateTime directly
-        _checkUpcomingEvents();
+        // Pass DateTime directly
       }
+      _checkUpcomingEvents(alertThreshold);
     });
   }
 
@@ -63,14 +64,21 @@ class NotificationsController extends GetxController {
     });
   }
 
-  void _checkUpcomingEvents() {
-    DateTime now = DateTime.now();
-    DateTime alertThreshold = now.add(Duration(days: 2)); // Look ahead two days
+  void _checkUpcomingEvents(DateTime threshold) {
+    firestore.collection('upcomingEvents').get().then((snapshot) {
+      for (var doc in snapshot.docs) {
+        log('UpcomingEvent doc data: ${doc.data()}');
 
-    firestore.collection('animals').get().then((snapshot) {
-      for (var animal in snapshot.docs) {
-        _checkBreedingRecords(animal.id, animal['name'], alertThreshold);
-        _checkVaccinationRecords(animal.id, animal['name'], alertThreshold); // Pass DateTime directly
+        String eventDateStr = doc['eventDate'];
+        if (eventDateStr.isNotEmpty) {
+          DateTime eventDate = DateTime.parse(eventDateStr);
+
+          if (eventDate.isBefore(threshold) && eventDate.isAfter(DateTime.now())) {
+            final message = "Upcoming event for ${doc['animalName']}: ${doc['eventType']}";
+            _addNotification(doc.id, message, eventDate);
+            log('Notification added for upcoming event: $message');
+          }
+        }
       }
     });
   }

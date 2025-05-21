@@ -1,6 +1,8 @@
 import 'package:cattle_managementapp/auth/sign_in_page.dart';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/controllers/auth_controller.dart';
+import 'package:cattle_managementapp/controllers/transactions_controller.dart';
+import 'package:cattle_managementapp/pages/profits_overview_page.dart';
 import 'package:cattle_managementapp/utils/dashBoard_cards.dart';
 import 'package:cattle_managementapp/widgets/add_animals.dart';
 import 'package:cattle_managementapp/widgets/allAnimalsInfo/all_animal_vaccines_page.dart';
@@ -16,6 +18,7 @@ class Homepage extends StatelessWidget {
   Widget build(BuildContext context) {
     final AuthController authController = Get.find();
     final AnimalRecordsController animalRecordsController = Get.put(AnimalRecordsController());
+    final TransactionsController transactionsController = Get.put(TransactionsController());
 
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +70,13 @@ class Homepage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      buildSummaryItems("This month profit", "Ksh 15,230"),
+                      Obx(
+                        () => buildSummaryItems(
+                          "This month profit",
+                          transactionsController.currentMonthProfit.toStringAsFixed(0),
+                        ),
+                      ),
+
                       buildSummaryItems("Today's Milk", "13.6L"),
                     ],
                   ),
@@ -89,7 +98,11 @@ class Homepage extends StatelessWidget {
                     },
                   ),
                   DashboardCard(title: "Milk Records", icon: Icons.local_drink),
-                  DashboardCard(title: "Profits", icon: Icons.attach_money),
+                  DashboardCard(
+                    title: "Profits",
+                    icon: Icons.attach_money,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfitsOverviewPage())),
+                  ),
                   DashboardCard(
                     title: "Vaccines",
                     icon: Icons.health_and_safety,

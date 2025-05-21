@@ -17,14 +17,59 @@ class UpcomingEventsPage extends StatelessWidget {
           return const Center(child: Text("No upcoming events recorded."));
         }
         return ListView.builder(
+          padding: const EdgeInsets.all(12),
           itemCount: controller.upcomingEvents.length,
           itemBuilder: (context, index) {
             final event = controller.upcomingEvents[index];
-            return ListTile(
-              leading: const Icon(Icons.event),
-              title: Text(event.eventType),
-              subtitle: Text("${event.animalName} - ${event.eventDate.toLocal().toString().split(' ')[0]}"),
-              trailing: Text(event.notes),
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 3,
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(event.eventType, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              "${event.eventDate.toLocal()}".split(' ')[0],
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // Animal Name
+                    Row(
+                      children: [
+                        const Icon(Icons.pets, size: 16, color: Colors.grey),
+                        const SizedBox(width: 6),
+                        Text(
+                          event.animalName,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
+                        SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                          onPressed: () => controller.deleteUpcomingEvent(event.id),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
             );
           },
         );
@@ -44,7 +89,6 @@ class UpcomingEventsPage extends StatelessWidget {
     String? selectedAnimalName;
     String? selectedEventType;
 
-    // Predefined event options
     final List<String> eventOptions = [
       'Dry-off / End of Lactation',
       'Housing Event',
@@ -75,15 +119,12 @@ class UpcomingEventsPage extends StatelessWidget {
                       onChanged: (value) {
                         setState(() {
                           selectedEventType = value;
-                          // Clear custom input if event type is not 'Other'
-                          if (value != 'Other') {
-                            customTypeController.clear();
-                          }
+                          if (value != 'Other') customTypeController.clear();
                         });
                       },
                     ),
 
-                    // Show custom event text field only if 'Other' is selected
+                    // Custom input for "Other" option
                     if (selectedEventType == 'Other')
                       TextField(
                         controller: customTypeController,
@@ -105,7 +146,6 @@ class UpcomingEventsPage extends StatelessWidget {
                       onChanged: (value) {
                         setState(() {
                           selectedAnimalId = value;
-                          // Get the animal name for the selected id
                           final animalDoc = controller.allAnimals.firstWhere((doc) => doc.id == value);
                           final data = animalDoc.data() as Map<String, dynamic>;
                           selectedAnimalName = data['name'] ?? 'Unnamed';
@@ -115,10 +155,11 @@ class UpcomingEventsPage extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Date picker field
+                    // Date Picker
                     Row(
                       children: [
-                        const Text('Event Date: '),
+                        const Text('Event Date:'),
+                        const SizedBox(width: 10),
                         TextButton(
                           child: Text(
                             "${selectedDate.toLocal()}".split(' ')[0],
@@ -141,7 +182,7 @@ class UpcomingEventsPage extends StatelessWidget {
                       ],
                     ),
 
-                    // Notes input
+                    // Notes field
                     TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes')),
                   ],
                 ),
