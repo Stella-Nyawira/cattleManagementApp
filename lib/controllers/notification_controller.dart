@@ -1,11 +1,13 @@
 import 'dart:developer';
 
 import 'package:cattle_managementapp/model/notifications_model.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NotificationsController extends GetxController {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   final notificationsList = <NotificationModel>[].obs;
 
   @override
@@ -15,6 +17,7 @@ class NotificationsController extends GetxController {
   }
 
   void notificationsAlert() {
+    notificationsList.clear();
     DateTime now = DateTime.now();
     DateTime alertThreshold = now.add(Duration(days: 2)); // Look ahead two days
 
@@ -86,5 +89,20 @@ class NotificationsController extends GetxController {
   void _addNotification(String id, String message, DateTime scheduledTime) {
     final notification = NotificationModel(id: id, message: message, scheduledTime: scheduledTime);
     notificationsList.add(notification);
+  }
+
+  void markAsRead(String id) {
+    final index = notificationsList.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      notificationsList[index].isRead = true;
+      notificationsList.refresh(); // To trigger UI update
+    }
+  }
+
+  void markAllAsRead() {
+    for (var notification in notificationsList) {
+      notification.isRead = true;
+    }
+    notificationsList.refresh();
   }
 }

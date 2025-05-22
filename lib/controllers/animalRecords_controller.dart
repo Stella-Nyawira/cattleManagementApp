@@ -29,7 +29,7 @@ class AnimalRecordsController extends GetxController {
   }
 
   Future<void> fetchAllAnimals() async {
-    try {
+    /* try {
       isLoading.value = true;
       final snapshot = await firestore.collection('animals').get();
       allAnimals.value = snapshot.docs;
@@ -40,7 +40,12 @@ class AnimalRecordsController extends GetxController {
       log('Error fetching animals: $e');
     } finally {
       isLoading.value = false;
-    }
+    } */
+    firestore.collection('animals').snapshots().listen((snapshot) {
+      allAnimals.value = snapshot.docs;
+      searchResults.value = snapshot.docs;
+      totalAnimals.value = snapshot.docs.length;
+    });
   }
 
   void searchAnimals(String query) {
@@ -119,6 +124,7 @@ class AnimalRecordsController extends GetxController {
       log('Calf data being saved: $calfData');
 
       await FirebaseFirestore.instance.collection('animals').add(calfData);
+      await fetchAllAnimals();
     }
   }
 

@@ -1,11 +1,12 @@
 import 'package:cattle_managementapp/pages/healthRecords_page.dart';
-import 'package:cattle_managementapp/pages/milkProduction_page.dart';
+import 'package:cattle_managementapp/pages/milkRecords_page.dart';
+
 import 'package:cattle_managementapp/pages/vaccinationRecords_page.dart';
 import 'package:cattle_managementapp/widgets/calves/calving_records_page.dart';
 import 'package:cattle_managementapp/widgets/edit_animals.dart';
 
 import 'package:cattle_managementapp/widgets/records/breeding_records_form.dart';
-import 'package:cattle_managementapp/widgets/records/vaccination_records_form.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -29,7 +30,7 @@ class RecordTypesPage extends StatelessWidget {
       {
         'title': 'Milk Production',
         'icon': Icons.local_drink,
-        'pageBuilder': () => MilkProductionPage(animalId: animalId, animalName: animalName),
+        'pageBuilder': () => MilkRecordsPage(animalId: animalId, animalName: animalName),
       },
       {
         'title': 'Health Records',

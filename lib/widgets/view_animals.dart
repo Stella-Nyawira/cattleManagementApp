@@ -1,9 +1,10 @@
+import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/pages/recordTypes_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:io';
 
 class ViewAnimalsPage extends StatefulWidget {
   const ViewAnimalsPage({super.key});
@@ -78,46 +79,12 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
     });
   }
 
-  Widget buildImageWidget(String urlOrPath) {
-    if (urlOrPath.startsWith('http')) {
-      return Image.network(
-        urlOrPath,
-        width: 80,
-        height: 100,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return fallbackImage();
-        },
-      );
-    } else {
-      return Image.file(
-        File(urlOrPath),
-        width: 80,
-        height: 100,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return fallbackImage();
-        },
-      );
-    }
-  }
-
-  Widget fallbackImage() {
-    return Container(
-      width: 80,
-      height: 100,
-      color: Colors.grey[300],
-      child: Icon(Icons.broken_image, size: 40, color: Colors.grey[600]),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("All Animals")),
       body: Column(
         children: [
-          // Search field with an icon just below the app bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -134,31 +101,35 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                     });
                   },
                 ),
-                if (isSearchActive)
-                  Expanded(
-                    child: TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search by Name or Breed',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.grey.shade400),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: isSearchActive ? 1.0 : 0.5,
+                    child: IgnorePointer(
+                      ignoring: !isSearchActive,
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search by Name or Breed',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade400),
+                          ),
+                          prefixIcon: const Icon(Icons.search),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.blue),
+                          ),
                         ),
-                        prefixIcon: const Icon(Icons.search),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.blue),
-                        ),
+                        onChanged: filterAnimals,
                       ),
-                      onChanged: (value) {
-                        filterAnimals(value);
-                      },
                     ),
                   ),
+                ),
               ],
             ),
           ),
-          // Displaying the animal list
           Expanded(
             child: FutureBuilder<List<DocumentSnapshot>>(
               future: animalsFuture,
@@ -182,9 +153,51 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                     final data = animal.data() as Map<String, dynamic>;
                     String? photoUrl = data['photoUrl'];
 
+                    Widget imageWidget;
+                    if (photoUrl != null && photoUrl.isNotEmpty) {
+                      if (photoUrl.startsWith('http')) {
+                        imageWidget = CachedNetworkImage(
+                          imageUrl: photoUrl,
+                          width: 80,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => const SizedBox(
+                                width: 80,
+                                height: 100,
+                                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              ),
+                          errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 40),
+                        );
+                      } else {
+                        imageWidget = Image.file(
+                          File(photoUrl),
+                          width: 80,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40),
+                        );
+                      }
+                    } else {
+                      imageWidget = Container(
+                        width: 80,
+                        height: 100,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                      );
+                    }
+
                     return InkWell(
-                      onTap: () {
+                      /* onTap: () {
                         Get.to(() => RecordTypesPage(animalId: animal.id, animalName: data['name']));
+                      }, */
+                      onTap: () async {
+                        bool? result = await Get.to(
+                          () => RecordTypesPage(animalId: animal.id, animalName: data['name']),
+                        );
+                        if (result == true) {
+                          Get.find<AnimalRecordsController>().fetchAllAnimals(); // ✅ Refresh animal list again
+                        }
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -197,9 +210,7 @@ class _ViewAnimalsPageState extends State<ViewAnimalsPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            photoUrl != null && photoUrl.isNotEmpty
-                                ? ClipRRect(borderRadius: BorderRadius.circular(8), child: buildImageWidget(photoUrl))
-                                : fallbackImage(),
+                            ClipRRect(borderRadius: BorderRadius.circular(8), child: imageWidget),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(

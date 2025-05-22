@@ -170,7 +170,7 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Breeding Record')),
+      appBar: AppBar(title: Text('Breeding Record ${widget.animalName}')),
       body: showForm ? buildBreedingForm() : buildRecordsList(),
       floatingActionButton: FloatingActionButton.extended(
         icon: Icon(showForm ? Icons.list : Icons.add),
@@ -198,14 +198,9 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Date: ${record['inseminationDate'] ?? 'Unknown'}'),
-                Text('Breeding: ${record['breedingSubType'] ?? 'N/A'}'),
-                Text(
-                  record['breedingMethod'] == 'Natural'
-                      ? 'Bull: ${record['bullName'] ?? '-'}'
-                      : 'Inseminated by: ${record['vetName'] ?? '-'}',
-                ),
-                Text('Status: ${record['pregnancyStatus'] ?? 'N/A'}'),
+                Text('method: ${record['breedingMethod'] ?? 'N/A'}'),
+                Text('date: ${record['inseminationDate'] ?? 'Unknown'}'),
+                Text('status: ${record['pregnancyStatus'] ?? 'N/A'}'),
               ],
             ),
             trailing: IconButton(
@@ -243,7 +238,6 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
                 ),
               );
               if (updated == true) {
-                // Refresh after edit if needed
                 fetchBreedingRecords();
               }
             },

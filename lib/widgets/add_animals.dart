@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/pages/homepage.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +24,14 @@ class AddAnimalPageState extends State<AddAnimalPage> {
   final colorController = TextEditingController();
   final weightController = TextEditingController();
 
+  String? selectedBreed;
+  bool isOtherBreed = false;
+  final otherBreedController = TextEditingController();
+
   File? selectedImage;
   final picker = ImagePicker();
+
+  bool isSaving = false; // to control loader and disable button
 
   Future<void> pickImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -60,11 +67,17 @@ class AddAnimalPageState extends State<AddAnimalPage> {
   }
 
   Future<void> saveAnimalToFirebase() async {
+    if (isSaving) return; // prevent multiple calls
+
     String tag = nameController.text.trim();
     if (tag.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Tag/Name cannot be empty")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tag/Name cannot be empty")));
       return;
     }
+
+    setState(() {
+      isSaving = true;
+    });
 
     try {
       String? imageUrl = selectedImage != null ? await uploadImage(selectedImage!, tag) : null;
@@ -73,7 +86,6 @@ class AddAnimalPageState extends State<AddAnimalPage> {
         'name': tag,
         'breed': breedController.text.trim(),
         'gender': genderController.text.trim(),
-        // Save the DOB in yyyy-MM-dd format
         'dateOfBirth': dobController.text.isNotEmpty ? dobController.text : null,
         'colorMarkings': colorController.text.trim(),
         'weight': double.tryParse(weightController.text.trim()),
@@ -82,28 +94,48 @@ class AddAnimalPageState extends State<AddAnimalPage> {
 
       await FirebaseFirestore.instance.collection('animals').add(animalData);
       Get.snackbar("Success", "Animal saved successfully");
-      Get.offAll(() => Homepage());
+      final animalRecordsController = Get.find<AnimalRecordsController>();
+      await animalRecordsController.fetchAllAnimals(); // Refresh the list of animals
+      Get.offAll(() => const Homepage());
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error saving animal: $e")));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    genderController.dispose();
+    breedController.dispose();
+    dobController.dispose();
+    colorController.dispose();
+    weightController.dispose();
+    otherBreedController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Add Animal")),
+      appBar: AppBar(title: const Text("Add Animal")),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text("Basic Information", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text("Basic Information", style: TextStyle(fontWeight: FontWeight.bold)),
 
-            TextField(controller: nameController, decoration: InputDecoration(labelText: "Name/Tag")),
-            SizedBox(height: 10),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: "Name/Tag")),
+            const SizedBox(height: 10),
 
             DropdownButtonFormField<String>(
               value: genderController.text.isNotEmpty ? genderController.text : null,
-              decoration: InputDecoration(labelText: "Gender"),
+              decoration: const InputDecoration(labelText: "Gender"),
               items:
                   ['Male', 'Female'].map((gender) {
                     return DropdownMenuItem(value: gender, child: Text(gender));
@@ -114,27 +146,65 @@ class AddAnimalPageState extends State<AddAnimalPage> {
                 });
               },
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-            TextField(controller: breedController, decoration: InputDecoration(labelText: "Breed")),
-            SizedBox(height: 10),
+            // Breed dropdown + text input combo
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: isOtherBreed ? 'Other' : selectedBreed,
+                  decoration: const InputDecoration(labelText: "Breed"),
+                  items:
+                      ['Zebu', 'Freshian', 'Jersey', 'Guernsey', 'Ayrshire', 'Brown Swiss', 'Holstein', 'Other'].map((
+                        breed,
+                      ) {
+                        return DropdownMenuItem<String>(value: breed, child: Text(breed));
+                      }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == 'Other') {
+                        isOtherBreed = true;
+                        selectedBreed = null;
+                        breedController.text = '';
+                      } else {
+                        isOtherBreed = false;
+                        selectedBreed = value;
+                        breedController.text = value ?? '';
+                      }
+                    });
+                  },
+                ),
+                if (isOtherBreed) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: otherBreedController,
+                    decoration: const InputDecoration(labelText: "Enter Breed", hintText: "Type breed here"),
+                    onChanged: (val) {
+                      breedController.text = val;
+                    },
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
 
             TextField(
               controller: dobController,
-              decoration: InputDecoration(labelText: "Date of Birth"),
+              decoration: const InputDecoration(labelText: "Date of Birth"),
               readOnly: true,
               onTap: () => pickDate(dobController),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-            TextField(controller: colorController, decoration: InputDecoration(labelText: "Color/Markings")),
-            SizedBox(height: 10),
+            TextField(controller: colorController, decoration: const InputDecoration(labelText: "Color/Markings")),
+            const SizedBox(height: 10),
 
-            TextField(controller: weightController, decoration: InputDecoration(labelText: "Weight")),
+            TextField(controller: weightController, decoration: const InputDecoration(labelText: "Weight")),
 
-            SizedBox(height: 16),
-            Text("Photo Upload", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.lightBlue)),
-            SizedBox(height: 8),
+            const SizedBox(height: 16),
+            const Text("Photo Upload", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.lightBlue)),
+            const SizedBox(height: 8),
 
             InkWell(
               onTap: pickImage,
@@ -151,9 +221,19 @@ class AddAnimalPageState extends State<AddAnimalPage> {
                 child: selectedImage == null ? Icon(Icons.add_a_photo, size: 40, color: Colors.grey[800]) : null,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-            ElevatedButton(onPressed: saveAnimalToFirebase, child: Text("Save")),
+            ElevatedButton(
+              onPressed: isSaving ? null : saveAnimalToFirebase,
+              child:
+                  isSaving
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                      : const Text("Save"),
+            ),
           ],
         ),
       ),

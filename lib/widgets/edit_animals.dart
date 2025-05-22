@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -67,8 +68,9 @@ class _EditAnimalPageState extends State<EditAnimalPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.back();
+      // await Future.delayed(const Duration(milliseconds: 500));
+      Get.find<AnimalRecordsController>().fetchAllAnimals();
+      Get.back(result: true);
     }
   }
 
