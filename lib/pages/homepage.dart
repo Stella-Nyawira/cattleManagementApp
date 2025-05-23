@@ -24,7 +24,7 @@ class Homepage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Cattle Manager", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        // backgroundColor: Colors.green[700],
+
         actions: [
           Obx(() {
             if (authController.user.value != null) {

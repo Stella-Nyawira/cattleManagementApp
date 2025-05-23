@@ -14,6 +14,8 @@ class SignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.green[500],
+
       body: GetBuilder(
         init: Get.find<AuthController>(),
         builder: (authController) {

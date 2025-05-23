@@ -198,8 +198,8 @@ class _BreedingRecordFormState extends State<BreedingRecordForm> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('method: ${record['breedingMethod'] ?? 'N/A'}'),
-                Text('date: ${record['inseminationDate'] ?? 'Unknown'}'),
+                //Text('method: ${record['breedingMethod'] ?? 'N/A'}'),
+                // Text('date: ${record['inseminationDate'] ?? 'Unknown'}'),
                 Text('status: ${record['pregnancyStatus'] ?? 'N/A'}'),
               ],
             ),

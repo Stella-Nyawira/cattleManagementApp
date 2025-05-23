@@ -68,7 +68,6 @@ class _EditAnimalPageState extends State<EditAnimalPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      // await Future.delayed(const Duration(milliseconds: 500));
       Get.find<AnimalRecordsController>().fetchAllAnimals();
       Get.back(result: true);
     }
@@ -118,6 +117,7 @@ class _EditAnimalPageState extends State<EditAnimalPage> {
                     children: [
                       if (photoUrlController.text.isNotEmpty)
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             GestureDetector(
                               onTap: pickImage,
