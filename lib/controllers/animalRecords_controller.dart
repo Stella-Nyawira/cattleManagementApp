@@ -19,6 +19,8 @@ class AnimalRecordsController extends GetxController {
   var vaccinationRecordsMap = <String, List<Map<String, dynamic>>>{}.obs;
   var healthRecords = <Map<String, dynamic>>[].obs;
 
+  RxMap<String, double> individualMilkProduction = <String, double>{}.obs;
+  RxDouble totalMilkProduced = 0.0.obs;
   RxList<UpcomingEvent> upcomingEvents = <UpcomingEvent>[].obs;
 
   @override
@@ -26,6 +28,7 @@ class AnimalRecordsController extends GetxController {
     super.onInit();
     fetchAllAnimals();
     fetchAllVaccinationRecords();
+    fetchAllMilkRecords();
   }
 
   Future<void> fetchAllAnimals() async {
@@ -188,6 +191,48 @@ class AnimalRecordsController extends GetxController {
     });
   }
 
+  Future<List<MilkProductionRecord>> fetchAllMilkRecords() async {
+    final snapshot = await firestore.collectionGroup('milkProductionRecords').get();
+    return snapshot.docs.map((doc) => MilkProductionRecord.fromMap(doc.data(), doc.id)).toList();
+  }
+
+  Future<void> updateMilkOverview() async {
+    try {
+      totalMilkProduced.value = 0;
+      individualMilkProduction.clear();
+
+      final animalsSnapshot = await FirebaseFirestore.instance.collection('animals').get();
+
+      for (var animalDoc in animalsSnapshot.docs) {
+        double animalTotal = 0;
+
+        final milkRecordsSnapshot =
+            await FirebaseFirestore.instance
+                .collection('animals')
+                .doc(animalDoc.id)
+                .collection('milkProductionRecords')
+                .get();
+
+        for (var milkDoc in milkRecordsSnapshot.docs) {
+          var data = milkDoc.data();
+
+          double morning = (data['morning'] ?? 0).toDouble();
+          double afternoon = (data['afternoon'] ?? 0).toDouble();
+          double evening = (data['evening'] ?? 0).toDouble();
+
+          animalTotal += morning + afternoon + evening;
+          totalMilkProduced.value += morning + afternoon + evening;
+        }
+
+        individualMilkProduction[animalDoc['name']] = animalTotal;
+      }
+
+      log('Milk overview updated successfully');
+    } catch (e) {
+      log(' Error fetching milk data: $e');
+    }
+  }
+
   Future<List<MilkProductionRecord>> fetchMilkProductionRecords(String animalId) async {
     final snapshot =
         await firestore
@@ -230,9 +275,9 @@ class AnimalRecordsController extends GetxController {
             return data;
           }).toList();
 
-      healthRecords.value = records; // Keep your observable updated too
+      healthRecords.value = records;
 
-      return records; // Return the list of records here
+      return records;
     } catch (e) {
       log('Error fetching health records: $e');
       healthRecords.value = [];

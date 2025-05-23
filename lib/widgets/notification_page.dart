@@ -15,7 +15,7 @@ class NotificationsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Notifications"),
-        backgroundColor: Colors.greenAccent,
+        //backgroundColor: Colors.greenAccent,
         elevation: 4,
         actions: [
           Obx(() {

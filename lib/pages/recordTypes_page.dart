@@ -51,6 +51,7 @@ class RecordTypesPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text("$animalName's Records")),
+      backgroundColor: Colors.green[700],
       body: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(color: Colors.grey[100]),

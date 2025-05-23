@@ -2,6 +2,7 @@ import 'package:cattle_managementapp/auth/sign_in_page.dart';
 import 'package:cattle_managementapp/controllers/animalRecords_controller.dart';
 import 'package:cattle_managementapp/controllers/auth_controller.dart';
 import 'package:cattle_managementapp/controllers/transactions_controller.dart';
+import 'package:cattle_managementapp/pages/milk_overview_page.dart';
 import 'package:cattle_managementapp/pages/profits_overview_page.dart';
 import 'package:cattle_managementapp/utils/dashBoard_cards.dart';
 import 'package:cattle_managementapp/widgets/add_animals.dart';
@@ -23,7 +24,7 @@ class Homepage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Cattle Manager", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.green[700],
+        // backgroundColor: Colors.green[700],
         actions: [
           Obx(() {
             if (authController.user.value != null) {
@@ -50,35 +51,21 @@ class Homepage extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.green[50],
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.green.shade100),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Obx(() => buildSummaryItems("Livestock", "${animalRecordsController.totalAnimals.value} Cows")),
-                      buildSummaryItems("Next Vaccine", "3 days"),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Obx(
-                        () => buildSummaryItems(
-                          "This month profit",
-                          transactionsController.currentMonthProfit.toStringAsFixed(0),
-                        ),
-                      ),
-
-                      buildSummaryItems("Today's Milk", "13.6L"),
-                    ],
+                  Obx(() => buildSummaryItems("Livestock", "${animalRecordsController.totalAnimals.value} Cows")),
+                  Obx(
+                    () => buildSummaryItems(
+                      "This month profit",
+                      "\$${transactionsController.currentMonthProfit.toStringAsFixed(0)}",
+                    ),
                   ),
                 ],
               ),
@@ -97,7 +84,11 @@ class Homepage extends StatelessWidget {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => ViewAnimalsPage()));
                     },
                   ),
-                  DashboardCard(title: "Milk Records", icon: Icons.local_drink),
+                  DashboardCard(
+                    title: "Milk Records",
+                    icon: Icons.local_drink,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MilkOverviewPage())),
+                  ),
                   DashboardCard(
                     title: "Profits",
                     icon: Icons.attach_money,
@@ -134,8 +125,8 @@ class Homepage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       ],
     );
   }

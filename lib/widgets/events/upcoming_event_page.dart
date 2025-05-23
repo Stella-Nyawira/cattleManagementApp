@@ -21,53 +21,75 @@ class UpcomingEventsPage extends StatelessWidget {
           itemCount: controller.upcomingEvents.length,
           itemBuilder: (context, index) {
             final event = controller.upcomingEvents[index];
+            final bool isUpcoming = event.eventDate.isAfter(DateTime.now());
+
             return Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 3,
-              margin: const EdgeInsets.only(bottom: 12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 1,
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                leading: CircleAvatar(radius: 16, child: const Icon(Icons.event, size: 16, color: Colors.white)),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(event.eventType, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    ),
+                    Text(
+                      isUpcoming ? 'Upcoming' : 'Past',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isUpcoming ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(event.eventType, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              "${event.eventDate.toLocal()}".split(' ')[0],
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
+                        const Icon(Icons.pets, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(event.animalName, style: const TextStyle(fontSize: 13)),
                       ],
                     ),
-
-                    const SizedBox(height: 6),
-
-                    // Animal Name
+                    const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.pets, size: 16, color: Colors.grey),
-                        const SizedBox(width: 6),
+                        const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
                         Text(
-                          event.animalName,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.green),
-                        ),
-                        SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 16, color: Colors.red),
-                          onPressed: () => controller.deleteUpcomingEvent(event.id),
+                          "${event.eventDate.toLocal()}".split(' ')[0],
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 8),
+                    if (event.notes != null && event.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.notes, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              event.notes!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                  onPressed: () => controller.deleteUpcomingEvent(event.id),
                 ),
               ),
             );
@@ -111,7 +133,6 @@ class UpcomingEventsPage extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Event type dropdown
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Event Type'),
                       items: eventOptions.map((e) => DropdownMenuItem<String>(value: e, child: Text(e))).toList(),
@@ -123,17 +144,12 @@ class UpcomingEventsPage extends StatelessWidget {
                         });
                       },
                     ),
-
-                    // Custom input for "Other" option
                     if (selectedEventType == 'Other')
                       TextField(
                         controller: customTypeController,
                         decoration: const InputDecoration(labelText: 'Custom Event Type'),
                       ),
-
                     const SizedBox(height: 10),
-
-                    // Animal dropdown
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Select Animal'),
                       items:
@@ -152,10 +168,7 @@ class UpcomingEventsPage extends StatelessWidget {
                         });
                       },
                     ),
-
                     const SizedBox(height: 10),
-
-                    // Date Picker
                     Row(
                       children: [
                         const Text('Event Date:'),
@@ -181,8 +194,6 @@ class UpcomingEventsPage extends StatelessWidget {
                         ),
                       ],
                     ),
-
-                    // Notes field
                     TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes')),
                   ],
                 ),

@@ -35,9 +35,9 @@ ThemeData lightTheme = ThemeData(
     bodyColor: $styles.colors.black, // Or ColorScheme.onBackground
     displayColor: $styles.colors.black,
   ),
-  scaffoldBackgroundColor: $styles.colors.white, // Basic light background
+  scaffoldBackgroundColor: $styles.colors.surface, // Basic light background
   appBarTheme: AppBarTheme(
-    backgroundColor: Colors.lightBlue, // Or $styles.colors.white.....hapaa
+    backgroundColor: Colors.green, // Or $styles.colors.white.....hapaa
     foregroundColor: $styles.colors.white, // Icons/text on appbar//...................I changed this from black
     elevation: 0,
     scrolledUnderElevation: 0.5,

@@ -31,6 +31,9 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
     });
     try {
       final records = await recordsController.fetchMilkProductionRecords(widget.animalId);
+      // Optional: Sort by date descending so latest records show first
+      records.sort((a, b) => b.date.compareTo(a.date));
+
       setState(() {
         milkRecords = records;
       });
@@ -43,20 +46,20 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
     }
   }
 
-  /* void _navigateToAddMilkRecord() async {
-    await Navigator.pushNamed(
-      context,
-      '/addMilkRecord',
-      arguments: {'animalId': widget.animalId, 'animalName': widget.animalName},
+  Widget _buildMilkDetail(String label, double quantity) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 4),
+        Text('${quantity.toStringAsFixed(1)} L', style: TextStyle(fontSize: 14)),
+      ],
     );
-
-    _loadMilkRecords();
   }
- */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Milk Records for ${widget.animalName}')),
+      appBar: AppBar(title: Text('Milk Records for ${widget.animalName}'), backgroundColor: Colors.green[700]),
       body:
           isLoading
               ? Center(child: CircularProgressIndicator())
@@ -66,9 +69,51 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
                 itemCount: milkRecords.length,
                 itemBuilder: (context, index) {
                   final record = milkRecords[index];
-                  return ListTile(
-                    title: Text('${record.quantity} liters'),
-                    subtitle: Text('${record.date.toLocal().toString().split(' ')[0]} - ${record.notes ?? ''}'),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    child: Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Date & Total
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '📅 ${record.date.toLocal().toString().split(' ')[0]}',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                Text(
+                                  'Total: ${record.total.toStringAsFixed(1)} L',
+                                  style: TextStyle(fontSize: 16, color: Colors.green[700]),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Session breakdown
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildMilkDetail('🌅 Morning', record.morning),
+                                _buildMilkDetail('🏞️ Afternoon', record.afternoon),
+                                _buildMilkDetail('🌙 Evening', record.evening),
+                              ],
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Notes
+                            if (record.notes != null && record.notes!.isNotEmpty)
+                              Text('📝 Note: ${record.notes!}', style: TextStyle(color: Colors.grey[700])),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -79,7 +124,7 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
               MaterialPageRoute(
                 builder: (builder) => MilkProductionForm(animalId: widget.animalId, animalName: widget.animalName),
               ),
-            ),
+            ).then((_) => _loadMilkRecords()),
         child: Icon(Icons.add),
         tooltip: 'Add Milk Record',
       ),
