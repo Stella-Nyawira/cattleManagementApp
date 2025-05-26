@@ -6,6 +6,7 @@ class MilkProductionRecord {
   final double morning;
   final double afternoon;
   final double evening;
+  final double total;
   final String? notes;
 
   MilkProductionRecord({
@@ -14,17 +15,19 @@ class MilkProductionRecord {
     required this.morning,
     required this.afternoon,
     required this.evening,
+    required this.total,
     this.notes,
   });
 
-  factory MilkProductionRecord.fromMap(Map<String, dynamic> map, String documentId) {
+  factory MilkProductionRecord.fromMap(Map<String, dynamic> map, String id) {
     return MilkProductionRecord(
-      id: documentId,
+      id: id,
       date: (map['date'] as Timestamp).toDate(),
-      morning: (map['morning'] != null) ? (map['morning'] as num).toDouble() : 0.0,
-      afternoon: (map['afternoon'] != null) ? (map['afternoon'] as num).toDouble() : 0.0,
-      evening: (map['evening'] != null) ? (map['evening'] as num).toDouble() : 0.0,
-      notes: map['note'] as String?,
+      morning: (map['morning'] ?? 0).toDouble(),
+      afternoon: (map['afternoon'] ?? 0).toDouble(),
+      evening: (map['evening'] ?? 0).toDouble(),
+      total: (map['total'] ?? 0).toDouble(),
+      notes: map['notes'],
     );
   }
 
@@ -34,9 +37,28 @@ class MilkProductionRecord {
       'morning': morning,
       'afternoon': afternoon,
       'evening': evening,
-      'note': notes,
+      'total': total,
+      'notes': notes,
     };
   }
 
-  double get total => morning + afternoon + evening;
+  MilkProductionRecord copyWith({
+    String? id,
+    DateTime? date,
+    double? morning,
+    double? afternoon,
+    double? evening,
+    double? total,
+    String? notes,
+  }) {
+    return MilkProductionRecord(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      morning: morning ?? this.morning,
+      afternoon: afternoon ?? this.afternoon,
+      evening: evening ?? this.evening,
+      total: total ?? this.total,
+      notes: notes ?? this.notes,
+    );
+  }
 }

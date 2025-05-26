@@ -11,6 +11,7 @@ import 'package:cattle_managementapp/widgets/events/upcoming_event_page.dart';
 import 'package:cattle_managementapp/widgets/view_animals.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
@@ -24,7 +25,6 @@ class Homepage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Cattle Manager", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-
         actions: [
           Obx(() {
             if (authController.user.value != null) {
@@ -61,12 +61,11 @@ class Homepage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Obx(() => buildSummaryItems("Livestock", "${animalRecordsController.totalAnimals.value} Cows")),
-                  Obx(
-                    () => buildSummaryItems(
-                      "This month profit",
-                      "\$${transactionsController.currentMonthProfit.toStringAsFixed(0)}",
-                    ),
-                  ),
+                  Obx(() {
+                    final profit = transactionsController.currentMonthProfit;
+                    final formattedProfit = NumberFormat("#,##0", "en_US").format(profit);
+                    return buildSummaryItems("This month profit", "KSh $formattedProfit");
+                  }),
                 ],
               ),
             ),

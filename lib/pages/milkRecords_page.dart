@@ -26,23 +26,15 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
   }
 
   Future<void> _loadMilkRecords() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
     try {
       final records = await recordsController.fetchMilkProductionRecords(widget.animalId);
-      // Optional: Sort by date descending so latest records show first
       records.sort((a, b) => b.date.compareTo(a.date));
-
-      setState(() {
-        milkRecords = records;
-      });
+      setState(() => milkRecords = records);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load records: $e')));
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -79,7 +71,6 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Date & Total
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -87,15 +78,33 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
                                   '📅 ${record.date.toLocal().toString().split(' ')[0]}',
                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
-                                Text(
-                                  'Total: ${record.total.toStringAsFixed(1)} L',
-                                  style: TextStyle(fontSize: 16, color: Colors.green[700]),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Total: ${record.total.toStringAsFixed(1)} L',
+                                      style: TextStyle(fontSize: 16, color: Colors.green[700]),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.edit, color: Colors.blueGrey),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => MilkProductionForm(
+                                                  animalId: widget.animalId,
+                                                  animalName: widget.animalName,
+                                                  existingRecord: record,
+                                                ),
+                                          ),
+                                        ).then((_) => _loadMilkRecords());
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
-
-                            // Session breakdown
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
@@ -104,10 +113,7 @@ class _MilkRecordsPageState extends State<MilkRecordsPage> {
                                 _buildMilkDetail('🌙 Evening', record.evening),
                               ],
                             ),
-
                             const SizedBox(height: 8),
-
-                            // Notes
                             if (record.notes != null && record.notes!.isNotEmpty)
                               Text('📝 Note: ${record.notes!}', style: TextStyle(color: Colors.grey[700])),
                           ],

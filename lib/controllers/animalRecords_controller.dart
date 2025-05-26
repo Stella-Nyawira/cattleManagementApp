@@ -233,6 +233,22 @@ class AnimalRecordsController extends GetxController {
     }
   }
 
+  Future<void> addMilkProductionRecord(String animalId, MilkProductionRecord record) async {
+    await firestore.collection('animals').doc(animalId).collection('milkProductionRecords').add(record.toMap());
+  }
+
+  Future<void> updateMilkProductionRecord(String animalId, MilkProductionRecord record) async {
+    if (record.id.isEmpty) {
+      throw Exception('Record ID is required to update a record');
+    }
+    await firestore
+        .collection('animals')
+        .doc(animalId)
+        .collection('milkProductionRecords')
+        .doc(record.id)
+        .update(record.toMap());
+  }
+
   Future<List<MilkProductionRecord>> fetchMilkProductionRecords(String animalId) async {
     final snapshot =
         await firestore
